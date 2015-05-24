@@ -55,19 +55,19 @@ ingress(#p{ns = Ns, id = Id, t = Vx}=X, Heap) ->
       X
    end.
 
-in([H|T], Heap)
- when H > 0 ->
-   %% positive index is emitted by predicate
-   ['_' | in(T, Heap)];
-
-in([H|T], Heap)
- when H < 0 ->
-   case erlang:element(-H, Heap) of
+in([{H,in}|T], Heap) ->
+   case erlang:element(H, Heap) of
       '_' ->
          throw(undefined);
       V   ->
          [V | in(T, Heap)]
    end; 
+
+in([{_,eg}|T], Heap) ->
+   ['_' | in(T, Heap)];
+
+in([{_,F}|T], Heap) ->
+   [F | in(T, Heap)];
 
 in([], _Heap) ->
    [].
@@ -75,20 +75,14 @@ in([], _Heap) ->
 
 %%
 %%
-vx(X, Heap)
- when X > 0 ->
-   erlang:element( X, Heap);
-vx(X, Heap)
- when X < 0 ->
-   erlang:element(-X, Heap).
+vx({X, _}, Heap) ->
+   erlang:element(X, Heap);
 
-vx(X, Val, Heap)
- when X > 0 ->
-   erlang:setelement( X, Heap, Val);
-vx(X, Val, Heap)
- when X < 0 ->
-   erlang:setelement(-X, Heap, Val).
+vx(X, Heap) ->
+   erlang:element(X, Heap).
 
+vx({X, _}, Val, Heap) ->
+   erlang:setelement(X, Heap, Val).
 
 heap(Vx, Head, Heap) ->
    erlang:element(2,
@@ -112,5 +106,5 @@ reset(Vx, Heap) ->
 %%
 %%
 protect(#p{t = Vx}=X, Heap) ->
-   X#p{t = [ case erlang:element(I, Heap) of '_' -> I ; _ -> -I end || I <- Vx ]}.
+   X#p{t = [ case erlang:element(I, Heap) of '_' -> T ; _ -> {I, in} end || {I, _} = T <- Vx ]}.
 
