@@ -9,8 +9,9 @@
 
 %%
 %% evaluate horn clause to stream
-stream(#h{body = [Head | Tail]}, Heap) ->
-   stream(lists:reverse([protect(Head, Heap) | Tail]), Heap);
+stream(#h{body = Body0}, Heap) ->
+   Body1 = [X#p{t = datalog_t:rewrite(T, Heap)} || X = #p{t = T} <- Body0],
+   stream(lists:reverse(Body1), Heap);
 
 stream(Body0, Heap0) ->
    case eval(Body0, Heap0) of
@@ -30,8 +31,8 @@ eval([], _Heap) ->
 
 %%
 %%
-accept(#p{s = ?NULL, t=Vx}=Head, Tail0, Heap0) ->
-   case eval(Tail0, reset(Vx, Heap0)) of
+accept(#p{s = ?NULL}=Head, Tail0, Heap0) ->
+   case eval(Tail0, Heap0) of
       {eof,   Tail1} ->
          {eof, [Head | Tail1]};
       {Heap1, Tail1} ->
@@ -47,34 +48,16 @@ accept(#p{s = Stream, t = Vx}=Head, Tail, Heap) ->
 ingress(#p{s = {s, _, _} = Stream}=X, _Heap) ->
    X#p{s = stream:tail(Stream)};
 
-ingress(#p{ns = Ns, id = Id, t = Vx}=X, Heap) ->
-   %% stream is not defined if any of (-) arguments is '_'
+ingress(#p{ns = Ns, id = Id, t = Tx}=X, Heap) ->
    try
-      X#p{s = erlang:apply(Ns, Id, in(Vx, Heap))}
+      % stream is not defined if any of ingress arguments is not defined (eq '=')
+      X#p{s = erlang:apply(Ns, Id, datalog_t:input(Tx, Heap))}
    catch throw:undefined ->
       X
    end.
 
-in([{H,in}|T], Heap) ->
-   case erlang:element(H, Heap) of
-      '_' ->
-         throw(undefined);
-      V   ->
-         [V | in(T, Heap)]
-   end; 
-
-in([{_,eg}|T], Heap) ->
-   ['_' | in(T, Heap)];
-
-in([{_,F}|T], Heap) ->
-   [F | in(T, Heap)];
-
-in([], _Heap) ->
-   [].
-
-
 %%
-%%
+%% update heap
 vx({X, _}, Heap) ->
    erlang:element(X, Heap);
 
@@ -94,17 +77,3 @@ heap(Vx, Head, Heap) ->
          Vx 
       )
    ). 
-
-reset(Vx, Heap) ->
-   lists:foldl(
-      fun(X, Acc) when X < 0 -> erlang:setelement(-X, Acc, '_'); (_, Acc) -> Acc end,
-      Heap,
-      Vx
-   ).
-
-
-%%
-%%
-protect(#p{t = Vx}=X, Heap) ->
-   X#p{t = [ case erlang:element(I, Heap) of '_' -> T ; _ -> {I, in} end || {I, _} = T <- Vx ]}.
-

@@ -6,6 +6,8 @@
 -export([
    compile/1
   ,prepare/1
+  ,rewrite/2
+  ,input/2
 ]).
 
 %%
@@ -95,6 +97,41 @@ filter(#p{t = Term}=X, Cond) ->
 
 filter(Body, Cond) ->
    [filter(Pred, Cond) || Pred <- Body].
+
+%%
+%% rewrite term specification using heap.
+%% the role of term is flipped from egress to ingress if
+%% it's value is defined outside of clause (e.g. defined by goal) 
+rewrite({_, in}=T,_Heap) ->
+   T;
+rewrite({I,  _}=T, Heap) ->
+   case erlang:element(I, Heap) of
+      '_' -> T;
+      _   -> {I, in}
+   end;
+
+rewrite(Term, Heap) ->
+   [rewrite(T, Heap) || T <- Term].
+
+
+%%
+%% map term specification to function arguments using heap
+input({I, in}, Heap) ->
+   case erlang:element(I, Heap) of
+      '_' -> throw(undefined);
+      X   -> X
+   end; 
+
+input({_, eg}, _Heap) ->
+   '_';
+
+input({_, Pred}, _Heap) ->
+   Pred;
+
+input(Term, Heap) ->
+   [input(T, Heap) || T <- Term].
+
+
 
 
 
