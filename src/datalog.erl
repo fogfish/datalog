@@ -1,5 +1,5 @@
 %%
-%%   Copyright 2012 Dmitry Kolesnikov, All Rights Reserved
+%%   Copyright 2014 - 2015 Dmitry Kolesnikov, All Rights Reserved
 %%
 %%   Licensed under the Apache License, Version 2.0 (the "License");
 %%   you may not use this file except in compliance with the License.
@@ -31,20 +31,21 @@
 
 %%
 %%
-new(Query) ->
-   #datalog{q = Query}.
+new(IStream) ->
+   #datalog{ns = IStream}.
 
-%%
-%%
-q({Head, Goal, Rules}, #datalog{}=State) ->
-   {_, Bind, _} = lists:keyfind(Head, 1, Rules),
+%% 
+%% 
+q(Datalog, #datalog{ns = IStream}=State) ->
+   {Head, Goal, Rules} = datalog_c:make(IStream, Datalog),
    Heap0 = heap_init(heap_size(Rules)),
-   Heap1 = lists:foldl(fun heap_defs/2, Heap0, lists:zip(Goal, Bind)),
-   eval(Rules, State#datalog{heap = Heap1});
+   Heap1 = lists:foldl(fun heap_defs/2, Heap0, Goal),
+   %% @todo: known limitation - support single horn clause only 
+   datalog_h:stream(hd(Rules), Heap1);
 
-q(Datalog, Query)
- when is_atom(Query) ->
-   q(Datalog, new(Query)).
+q(Datalog, IStream)
+ when is_atom(IStream) ->
+   q(Datalog, new(IStream)).
 
    
 
@@ -55,68 +56,32 @@ q(Datalog, Query)
 %%%----------------------------------------------------------------------------
 
 %%
-%% evaluate predicate
-eval({Uid, Bind}, #datalog{q = Q, heap = Heap}) ->
-   erlang:apply(Q, Uid, bind(Bind, Heap));
-
-eval({Uid, _, Pred}, State) ->
-   eval(hd(Pred), State);
-
-eval([Rule], State) ->
-   eval(Rule, State).
-
-%%
-%% bind head intent status to predicate variables
-bind(Bind, Head) ->
-   [erlang:element(X, Head) || X <- Bind].
-
-%%
-%% resolve required heap size of datalog program
-heap_size({_, Bind, List}) ->
-   erlang:max(heap_size(Bind), heap_size(List));
-heap_size({_, Bind}) ->
-   heap_size(Bind);
-heap_size(X)
- when is_integer(X) ->
-   X;
-heap_size(List)
- when is_list(List) ->
-   lists:max([heap_size(X) || X <- List]);
-heap_size(_) ->
-   0.
-
-%%
 %%
 heap_init(N) ->
    erlang:make_tuple(N, '_').
 
 %%
 %%
-heap_defs({A, _}, Heap)
- when is_integer(A) ->
+heap_defs('_', Heap) ->
    Heap;
-heap_defs({A, B}, Heap) ->
-   erlang:setelement(B, Heap, A).
+heap_defs({I, X}, Heap) ->
+   erlang:setelement(I, Heap, X).
 
-
-% -export([behaviour_info/1]).
-
-% %%%----------------------------------------------------------------------------
-% %%%
-% %%% datalog query interface
-% %%%
-% %%%----------------------------------------------------------------------------
-
-% %%
-% %%
-% behaviour_info(callbacks) ->
-%    [
-%       %%
-%       %% xxx
-%       %%
-%       %% -spec(xxx/1 :: (xxx(), xxx()) -> datum:stream()).
-%       % {q,   1}
-%    ];
-% behaviour_info(_) ->
-%    undefined.
+%%
+%% resolve required heap size of datalog program
+heap_size(List)
+ when is_list(List) ->
+   lists:max([heap_size(X) || X <- List]);
+heap_size(#h{body = List}) ->
+   lists:max([heap_size(X) || X <- List]);
+heap_size(#p{t = List}) ->
+   lists:max([heap_size(X) || X <- List]);
+heap_size(X)
+ when is_tuple(X) ->
+   lists:max([heap_size(Y) || Y <- erlang:tuple_to_list(X)]);
+heap_size(X)
+ when is_integer(X) ->
+   X;
+heap_size(_) ->
+   0.
 

@@ -12,10 +12,8 @@
 
 %%
 %% compile query, replace predicate term with abstract syntax
-compile(Query) ->
-   erlang:element(1, 
-      lists:mapfoldl(fun compile/2, dict:new(), Query)
-   ).
+compile(Datalog) -> 
+   lists:mapfoldl(fun compile/2, dict:new(), Datalog).
 
 compile({Id, Term0}, Acc0) ->
    {Term1, Acc1} = lists:mapfoldl(fun compile/2, Acc0, Term0),
@@ -51,9 +49,9 @@ compile(Id, Acc0) ->
 
 %%
 %% prepare query, replace predicate term with evaluation order
-prepare(Query) ->
+prepare(Datalog) ->
    erlang:element(1, 
-      lists:mapfoldl(fun prepare/2, [], Query)
+      lists:mapfoldl(fun prepare/2, [], Datalog)
    ).
 
 prepare(#h{body = Body}=X, Acc0) ->

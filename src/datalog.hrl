@@ -16,20 +16,18 @@
 -define(NULL,    {}).
 
 -record(datalog, {
-   q    = undefined :: atom() %% data query interface
+   ns   = undefined :: atom() %% data query global namespace (IStream interface)
   ,heap = undefined :: any()  %% head state of the query 
 }).
 
 %%
 %% rule predicate
 -record(p, {
-   ns = undefined :: atom(),         %% predicate name-space
+   ns = undefined :: atom(),         %% predicate namespace (IStream interface)
    id = undefined :: atom(),         %% predicate identity
    t  = []        :: list(),         %% predicate terms    
    s  = {}        :: datum:stream()  %% stream bound to predicate  
 }).
-
-
 
 
 %%
@@ -37,6 +35,6 @@
 -record(h, {
    id   = undefined :: atom(),       %% rule identity
    head = []        :: list(),       %% rule egress variables
-   body = []        :: [#p{}]        %% rule body    
+   body = []        :: [#p{}]        %% rule body 
 }).
 

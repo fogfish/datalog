@@ -15,29 +15,44 @@
 ]).
 
 %%
-%% compile datalog query
-make(Ns, Query) ->
-   datalog_t:prepare(
-      datalog_t:compile(
-         compile(Query, Ns)
-      )
-   ).
+%% compile datalog query, takes stream-interface and datalog program
+%% returns abstract syntax tree for horn clauses and variable mapping
+make(IStream, {Head, Goal0, Rules0}) ->
+   %% compile rules
+   {Rules1, Var} = datalog_t:compile(
+      compile(Rules0, IStream)
+   ),
+   Rules2 = datalog_t:prepare(Rules1),
+   %% compile goal
+   #h{head=Bind} = lists:keyfind(Head, #h.id, Rules2),
+   Goal1  = lists:map(
+      fun({I, X} = Xx) ->
+         case dict:find(X, Var) of
+            {ok, I} ->
+               '_';
+            _ ->
+               Xx
+         end
+      end,
+      lists:zip(Bind, Goal0)
+   ),
+   {Head, Goal1, Rules2}.
 
 %%
 %% compile datalog to abstract structures
-compile({Id, Term}, Ns) -> 
-   #p{ns = Ns, id = Id, t = Term};
+compile({Id, Term}, IStream) -> 
+   % compile predicate
+   #p{ns = IStream, id = Id, t = Term};
 
-%% compile built-in filter
-compile({'>', Id, Term}, _Ns) ->
+compile({'>', Id, Term}, _IStream) ->
+   % compile built-in filter
    #p{ns = filter, id = '>', t = [Id], s = Term};
 
-%% compile horn clause
-compile({Id, Head, Body}, Ns) ->
-   #h{id = Id, head = Head, body = [compile(X, Ns) || X <- Body]};
+compile({Id, Head, Body}, IStream) ->
+   % compile horn clause
+   #h{id = Id, head = Head, body = [compile(X, IStream) || X <- Body]};
 
-compile(Query, Ns) ->
-   [compile(X, Ns) || X <- Query].
+compile(Datalog, IStream) ->
+   [compile(X, IStream) || X <- Datalog].
 
-   
 
