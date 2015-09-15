@@ -11,4 +11,6 @@ deps/
 .rebar/
 tests/
 rebar
+*_leex.erl
+*_yeec.erl
 *.sublime-*

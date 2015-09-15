@@ -15,12 +15,16 @@
 %%
 %% @doc
 %%   datalog evaluator
+%%
+%% @todo 
+%%   * known limitation - support single horn clause only 
 -module(datalog).
 -include("datalog.hrl").
 
 -export([
    new/1
   ,q/2
+  ,parse/1
 ]).
 
 -type(bind()    :: [integer()]).
@@ -40,14 +44,27 @@ q(Datalog, #datalog{ns = IStream}=State) ->
    {Head, Goal, Rules} = datalog_c:make(IStream, Datalog),
    Heap0 = heap_init(heap_size(Rules)),
    Heap1 = lists:foldl(fun heap_defs/2, Heap0, Goal),
-   %% @todo: known limitation - support single horn clause only 
    datalog_h:stream(hd(Rules), Heap1);
 
 q(Datalog, IStream)
  when is_atom(IStream) ->
    q(Datalog, new(IStream)).
 
-   
+%%
+%%
+parse(Datalog) ->
+   try
+      {ok, Lex, _} = datalog_leex:string(Datalog),
+      {ok, Req}    = datalog_yeec:parse(Lex),
+      Req
+   catch
+   _:{badmatch, {error, {_, rds_parser, Reason}}} ->
+      {error, Reason}; 
+   _:{badmatch, {error, {_, rds_lexer,  Reason},_}} ->
+      {error, Reason}; 
+   _:{badmatch, Error} ->
+      Error
+   end. 
 
 %%%----------------------------------------------------------------------------
 %%%

@@ -1,6 +1,6 @@
 # datalog
 
-datalog evaluator library
+datalog evaluator library -  
 
 # background
 
