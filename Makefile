@@ -118,7 +118,8 @@ unit: all
 	@./rebar skip_deps=true eunit
 
 test:
-	@erl ${EFLAGS} -run deb test test/${TEST}.config
+	@mkdir -p /tmp/test/${APP} ;\
+	erl ${EFLAGS} -run datalog test test/${TEST}.config 
 
 docs:
 	@./rebar skip_deps=true doc

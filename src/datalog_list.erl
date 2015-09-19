@@ -18,8 +18,20 @@
 -module(datalog_list).
 
 -export([
-   like/4
+   like/3
+  ,like/4
 ]).
+
+like(List, '_', '_') ->
+   stream:build(List);
+
+like(List,   A, '_') ->
+   stream:filter(fun({X, _}) -> X =:= A end, stream:build(List));
+like(List, '_',   B) ->
+   stream:filter(fun({_, Y}) -> Y =:= B end, stream:build(List));
+
+like(List,   A,   B) ->
+   stream:filter(fun({X, Y}) -> X =:= A andalso Y =:= B end, stream:build(List)).
 
 
 like(List, '_', '_', '_') ->
@@ -36,7 +48,9 @@ like(List,   A,   B, '_') ->
    stream:filter(fun({X, Y, _}) -> X =:= A andalso Y =:= B end, stream:build(List));
 like(List,   A,  '_',  C) ->
    stream:filter(fun({X, _, Z}) -> X =:= A andalso Z =:= C end, stream:build(List));
-like(List, '_', B,  C) ->
-   stream:filter(fun({_, Y, Z}) -> Y =:= B andalso Z =:= C end, stream:build(List)).
+like(List, '_',   B,  C) ->
+   stream:filter(fun({_, Y, Z}) -> Y =:= B andalso Z =:= C end, stream:build(List));
    
+like(List,   A,   B,  C) ->
+   stream:filter(fun({X, Y, Z}) -> X =:= A andalso Y =:= B andalso Z =:= C end, stream:build(List)).
 

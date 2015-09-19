@@ -12,11 +12,37 @@ L0 is a rule head, it is a producer of new facts deducted by body expression. Th
 
 Each datalog program has a goal that defines a subset of required relation.
 
-Example
+Example of datalog program
 ```
-?- id("Ridley Scott", Y).
+?- id(X, "Ridley Scott").
 id(X, Y) :- like(X, name, Y). 
 ```
+
+# syntax
+
+The library supports two notations for datalog: 
+* the original as ```string()```, it is compliant with @todo
+* Erlang native format as ```term()```
+
+## native format
+
+```
+-type(datalog() :: {atom(), bind(), [horn()]}).
+-type(horn()    :: {atom(), bind(), [pred()]}).
+-type(pred()    :: {atom(), bind()}).
+-type(bind()    :: [any()]).
+```
+
+Example of Erlang native datalog
+```
+{id, [x, <<"Ridley Scott">>], 
+   [
+      {id, [x,y], [ {like, [x, name, y]} ]}
+   ]
+}.
+```
+
+
 
 
 # background

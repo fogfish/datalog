@@ -31,9 +31,13 @@ TERMS -> var ',' TERMS :
    [unwrap('$1') | '$3'].
 TERMS -> lit ',' TERMS :
    [unwrap('$1') | '$3'].
+TERMS -> symbol ',' TERMS :
+   [unwrap('$1') | '$3'].
 TERMS -> var :
    [unwrap('$1')].
 TERMS -> lit :
+   [unwrap('$1')].
+TERMS -> symbol :
    [unwrap('$1')].
 
 %%

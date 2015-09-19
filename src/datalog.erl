@@ -24,24 +24,31 @@
 -export([
    q/3
   ,p/1
+  ,test/1
 ]).
 
--type(bind()    :: [integer()]).
+%%
+%% data-types
+-type(datalog() :: {atom(), bind(), [horn()]}).
+-type(horn()    :: {atom(), bind(), [pred()]}).
 -type(pred()    :: {atom(), bind()}).
--type(rule()    :: {atom(), bind(), [pred()]}).
-% -type(datalog() :: {atom(), bind(), [rule()]}).
+-type(bind()    :: [any()]).
 
 
 %% 
 %% evaluate datalog
+-spec(q/3 :: (datalog(), any(), atom()) -> datum:stream()).
+
 q(Datalog, Input, Mod) ->
-   {Head, Goal, Rules} = datalog_c:make(Datalog),
+   {_Head, Goal, Rules} = datalog_c:make(Datalog),
    Heap0 = heap_init(heap_size(Rules)),
    Heap1 = lists:foldl(fun heap_defs/2, Heap0, Goal),
    datalog_h:stream(hd(Rules), #datalog{mod = Mod, state=Input, heap = Heap1}).
 
 %%
 %% parse datalog
+-spec(p/1 :: (string()) -> datalog()).
+
 p(Datalog) ->
    try
       {ok, Lex, _} = datalog_leex:string(Datalog), 
@@ -55,6 +62,12 @@ p(Datalog) ->
    _:{badmatch, Error} ->
       Error
    end. 
+
+%%
+%% helper function to kick unit test
+test(Spec) ->
+   ct:run_test([{spec, Spec}]).
+
 
 %%%----------------------------------------------------------------------------
 %%%
