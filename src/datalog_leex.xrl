@@ -12,9 +12,9 @@ WS    = ([\000-\s]|%.*)
 Rules.
 
 {LC}+   :
-   {token, {symbol,  TokenLine, list_to_atom(TokenChars)}}.
-{UC}+   :
-   {token, {symbol,  TokenLine, list_to_atom(TokenChars)}}.
+   {token, {symbol, TokenLine, list_to_atom(TokenChars)}}.
+{UC}+{LC}*  :
+   {token, {var, TokenLine, list_to_atom(string:to_lower(TokenChars))}}.
 
 %%
 %% literals

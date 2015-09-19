@@ -42,6 +42,7 @@ EFLAGS = \
 	-name ${APP}@${ADDR} \
 	-setcookie nocookie \
 	-pa ${ROOT}/ebin \
+	-pa ${ROOT}/priv \
 	-pa ${ROOT}/deps/*/ebin \
 	-pa ${ROOT}/apps/*/ebin \
 	-pa rel/files \

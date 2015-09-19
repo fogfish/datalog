@@ -24,7 +24,7 @@
 -export([
    new/1
   ,q/2
-  ,parse/1
+  ,p/1
 ]).
 
 -type(bind()    :: [integer()]).
@@ -51,10 +51,10 @@ q(Datalog, IStream)
    q(Datalog, new(IStream)).
 
 %%
-%%
-parse(Datalog) ->
+%% parse datalog
+p(Datalog) ->
    try
-      {ok, Lex, _} = datalog_leex:string(Datalog),
+      {ok, Lex, _} = datalog_leex:string(Datalog), 
       {ok, Req}    = datalog_yeec:parse(Lex),
       Req
    catch

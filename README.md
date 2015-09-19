@@ -1,6 +1,23 @@
 # datalog
 
-datalog evaluator library -  
+The library implements a simplified version of query engine using _logic programming_ paradigm. The logic program consists of finite set of facts (knowledge base) and rules. The rules are used to deduce new facts from other facts. The knowledge base is abstracted using streams to retrieve ground facts and feed them to logic engine.  
+
+The Horn clauses formally defines rules
+
+```
+   L0 :- L1, ..., Ln
+```
+
+L0 is a rule head, it is a producer of new facts deducted by body expression. The body is a conjunction of statement, built-in functions and filters. Each Li consist of predicate symbol and terms sucn as p(t1, ..., tk). A term is either a constant or a variable. The library reflect each predicate to another horn clause or stream of facts.
+
+Each datalog program has a goal that defines a subset of required relation.
+
+Example
+```
+?- id("Ridley Scott", Y).
+id(X, Y) :- like(X, name, Y). 
+```
+
 
 # background
 
@@ -60,6 +77,8 @@ emitter - input to evaluator:
 
 
 # references
+
+1.
 
 1. http://ion.uwinnipeg.ca/~ychen2/journalpapers/StratifiedDB.pdf
 1. http://www.cs.toronto.edu/~drosu/csc343-l7-handout6.pdf

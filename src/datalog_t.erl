@@ -113,7 +113,7 @@ rewrite(Term, Heap) ->
 
 
 %%
-%% map term specification to function arguments using heap
+%% map term specification to predicate function arguments using current heap
 input({I, in}, Heap) ->
    case erlang:element(I, Heap) of
       '_' -> throw(undefined);

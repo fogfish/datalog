@@ -1,12 +1,12 @@
 %% @doc
 %%   datalog
 
-Nonterminals   DATALOG CLAUSES HORN BODY VARS.
-Terminals      '?-' ':-' '(' ')' '.' ',' lit symbol.
+Nonterminals   DATALOG CLAUSES HORN BODY ITEM GUARD TERMS.
+Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' lit var symbol.
 Rootsymbol     DATALOG.
 
 
-DATALOG -> '?-' symbol '(' VARS ')' '.' CLAUSES :
+DATALOG -> '?-' symbol '(' TERMS ')' '.' CLAUSES :
    {unwrap('$2'), '$4', '$7'}.
 
 CLAUSES -> HORN CLAUSES :
@@ -14,18 +14,47 @@ CLAUSES -> HORN CLAUSES :
 CLAUSES -> '$empty' :
    [].
 
-HORN -> symbol '(' VARS ')' ':-' BODY '.' :
+HORN -> symbol '(' TERMS ')' ':-' BODY '.' :
    {unwrap('$1'), '$3', '$6'}.
 
-BODY -> symbol '(' VARS ')' ',' BODY :
-   [{unwrap('$1'), '$3'} | '$6'].
-BODY -> symbol '(' VARS ')' :
-   [{unwrap('$1'), '$3'}].
+BODY -> ITEM ',' BODY :
+   ['$1' | '$3'].
+BODY -> ITEM :
+   ['$1'].
 
-VARS -> symbol ',' VARS :
+ITEM -> symbol '(' TERMS ')' :
+   {unwrap('$1'), '$3'}.
+ITEM -> symbol GUARD lit :
+   {'$2', unwrap('$1'), unwrap('$3')}.
+
+TERMS -> var ',' TERMS :
    [unwrap('$1') | '$3'].
-VARS -> symbol :
+TERMS -> lit ',' TERMS :
+   [unwrap('$1') | '$3'].
+TERMS -> var :
    [unwrap('$1')].
+TERMS -> lit :
+   [unwrap('$1')].
+
+%%
+%%
+GUARD    -> '=' :
+   '=:='.
+GUARD    -> '>' :
+   '>'.
+GUARD    -> '<' :
+   '<'.
+GUARD    -> '>' '=' :
+   '>='.
+GUARD    -> '=' '>' :
+   '>='.
+GUARD    -> '=' '<' :
+   '=<'.
+GUARD    -> '<' '=' :
+   '=<'.
+GUARD    -> '!' '=' :
+   '=/='.
+
 
 %%
 %%
