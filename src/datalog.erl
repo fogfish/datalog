@@ -22,33 +22,23 @@
 -include("datalog.hrl").
 
 -export([
-   new/1
-  ,q/2
+   q/3
   ,p/1
 ]).
 
 -type(bind()    :: [integer()]).
 -type(pred()    :: {atom(), bind()}).
 -type(rule()    :: {atom(), bind(), [pred()]}).
--type(datalog() :: {atom(), bind(), [rule()]}).
+% -type(datalog() :: {atom(), bind(), [rule()]}).
 
-
-%%
-%%
-new(IStream) ->
-   #datalog{ns = IStream}.
 
 %% 
-%% 
-q(Datalog, #datalog{ns = IStream}=State) ->
-   {Head, Goal, Rules} = datalog_c:make(IStream, Datalog),
+%% evaluate datalog
+q(Datalog, Input, Mod) ->
+   {Head, Goal, Rules} = datalog_c:make(Datalog),
    Heap0 = heap_init(heap_size(Rules)),
    Heap1 = lists:foldl(fun heap_defs/2, Heap0, Goal),
-   datalog_h:stream(hd(Rules), Heap1);
-
-q(Datalog, IStream)
- when is_atom(IStream) ->
-   q(Datalog, new(IStream)).
+   datalog_h:stream(hd(Rules), #datalog{mod = Mod, state=Input, heap = Heap1}).
 
 %%
 %% parse datalog

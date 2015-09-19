@@ -9,38 +9,39 @@
 
 %%
 %% evaluate horn clause to stream
-stream(#h{body = Body0}, Heap) ->
-   Body1 = [X#p{t = datalog_t:rewrite(T, Heap)} || X = #p{t = T} <- Body0],
-   stream(lists:reverse(Body1), Heap);
+stream(#h{body = Body0}, Datalog) ->
+   Body1 = [X#p{t = datalog_t:rewrite(T, Datalog)} || X = #p{t = T} <- Body0],
+   stream(lists:reverse(Body1), Datalog);
 
-stream(Body0, Heap0) ->
-   case eval(Body0, Heap0) of
+stream(Body0, Datalog0) ->
+   case eval(Body0, Datalog0) of
       {eof,       _} ->
          stream:new();
-      {Heap1, Body1} ->
-         stream:new(Heap1, fun() -> stream(Body1, Heap1) end)
+      {#datalog{heap = Heap} = Datalog1, Body1} ->
+         stream:new(Heap, fun() -> stream(Body1, Datalog1) end)
    end.
 
 %%
 %% evaluate 
-eval([Head | Tail], Heap) ->
-   accept(ingress(Head, Heap), Tail, Heap);
+eval([Head | Tail], Datalog) ->
+   accept(ingress(Head, Datalog), Tail, Datalog);
 
-eval([], _Heap) ->
+eval([], _Datalog) ->
    {eof, []}.
 
 %%
 %%
-accept(#p{s = ?NULL}=Head, Tail0, Heap0) ->
-   case eval(Tail0, Heap0) of
+accept(#p{s = ?NULL}=Head, Tail0, Datalog0) ->
+   case eval(Tail0, Datalog0) of
       {eof,   Tail1} ->
          {eof, [Head | Tail1]};
-      {Heap1, Tail1} ->
-         accept(ingress(Head, Heap1), Tail1, Heap1)
+      {Datalog1, Tail1} ->
+         accept(ingress(Head, Datalog1), Tail1, Datalog1)
    end;
 
-accept(#p{s = Stream, t = Vx}=Head, Tail, Heap) ->
-   {heap(Vx, stream:head(Stream), Heap), [Head | Tail]}.
+accept(#p{s = Stream, t = Vx}=Head, Tail, #datalog{heap=Heap0}=Datalog) ->
+   Heap1 = heap(Vx, stream:head(Stream), Heap0),
+   {Datalog#datalog{heap =Heap1}, [Head | Tail]}.
 
 
 %%
@@ -48,10 +49,11 @@ accept(#p{s = Stream, t = Vx}=Head, Tail, Heap) ->
 ingress(#p{s = {s, _, _} = Stream}=X, _Heap) ->
    X#p{s = stream:tail(Stream)};
 
-ingress(#p{ns = Ns, id = Id, t = Tx}=X, Heap) ->
+ingress(#p{id = Id, t = Tx}=X, #datalog{mod = Mod, state = State} = Heap) ->
    try
       % stream is not defined if any of ingress arguments is not defined (eq '=')
-      X#p{s = erlang:apply(Ns, Id, datalog_t:input(Tx, Heap))}
+      % @todo: get module from Heap
+      X#p{s = erlang:apply(Mod, Id, [State | datalog_t:input(Tx, Heap)])}
    catch throw:undefined ->
       X
    end.

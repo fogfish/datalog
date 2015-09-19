@@ -11,16 +11,16 @@
 -include("datalog.hrl").
 
 -export([
-   make/2
+   make/1
 ]).
 
 %%
 %% compile datalog query, takes stream-interface and datalog program
 %% returns abstract syntax tree for horn clauses and variable mapping
-make(IStream, {Head, Goal0, Rules0}) ->
+make({Head, Goal0, Rules0}) ->
    %% compile rules
    {Rules1, Var} = datalog_t:compile(
-      compile(Rules0, IStream)
+      compile(Rules0)
    ),
    Rules2 = datalog_t:prepare(Rules1),
    %% compile goal
@@ -40,19 +40,19 @@ make(IStream, {Head, Goal0, Rules0}) ->
 
 %%
 %% compile datalog to abstract structures
-compile({Id, Term}, IStream) -> 
+compile({Id, Term}) -> 
    % compile predicate
-   #p{ns = IStream, id = Id, t = Term};
+   #p{id = Id, t = Term};
 
-compile({'>', Id, Term}, _IStream) ->
+compile({'>', Id, Term}) ->
    % compile built-in filter
-   #p{ns = filter, id = '>', t = [Id], s = Term};
+   #f{id = '>', t = [Id], s = Term};
 
-compile({Id, Head, Body}, IStream) ->
+compile({Id, Head, Body}) ->
    % compile horn clause
-   #h{id = Id, head = Head, body = [compile(X, IStream) || X <- Body]};
+   #h{id = Id, head = Head, body = [compile(X) || X <- Body]};
 
-compile(Datalog, IStream) ->
-   [compile(X, IStream) || X <- Datalog].
+compile(Datalog) ->
+   [compile(X) || X <- Datalog].
 
 

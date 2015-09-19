@@ -24,9 +24,9 @@ compile(#h{head = Head0, body = Body0}=X, Acc0) ->
    Head1 = [dict:fetch(H, Acc1) || H <- Head0],
    {X#h{head = Head1, body = Body1}, Acc1};
 
-compile(#p{ns = filter, t = Term0}=X, Acc0) ->
+compile(#f{t = Term0}=X, Acc0) ->
    Term1 = [dict:fetch(T, Acc0) || T <- Term0],
-   {X#p{t = Term1}, Acc0};
+   {X#f{t = Term1}, Acc0};
 
 compile(#p{t = Term0}=X, Acc0) ->
    {Term1, Acc1} = lists:mapfoldl(fun compile/2, Acc0, Term0),
@@ -55,7 +55,7 @@ prepare(Datalog) ->
    ).
 
 prepare(#h{body = Body}=X, Acc0) ->
-   {Pred, Cond} = lists:partition(fun(#p{ns = Ns}) -> Ns =/= filter end, Body),
+   {Pred, Cond} = lists:partition(fun(#p{}) -> true; (_) -> false end, Body),
    {Body1,   _} = lists:mapfoldl(fun prepare/2, [], Pred),
    {X#h{body = filter(Body1, Cond)}, Acc0};
 
@@ -100,34 +100,34 @@ filter(Body, Cond) ->
 %% rewrite term specification using heap.
 %% the role of term is flipped from egress to ingress if
 %% it's value is defined outside of clause (e.g. defined by goal) 
-rewrite({_, in}=T,_Heap) ->
+rewrite({_, in}=T, #datalog{}) ->
    T;
-rewrite({I,  _}=T, Heap) ->
+rewrite({I,  _}=T, #datalog{heap = Heap}) ->
    case erlang:element(I, Heap) of
       '_' -> T;
       _   -> {I, in}
    end;
 
-rewrite(Term, Heap) ->
-   [rewrite(T, Heap) || T <- Term].
+rewrite(Term, Datalog) ->
+   [rewrite(T, Datalog) || T <- Term].
 
 
 %%
 %% map term specification to predicate function arguments using current heap
-input({I, in}, Heap) ->
+input({I, in}, #datalog{heap = Heap}) ->
    case erlang:element(I, Heap) of
       '_' -> throw(undefined);
       X   -> X
    end; 
 
-input({_, eg}, _Heap) ->
+input({_, eg}, _Datalog) ->
    '_';
 
-input({_, Pred}, _Heap) ->
+input({_, Pred}, _Datalog) ->
    Pred;
 
-input(Term, Heap) ->
-   [input(T, Heap) || T <- Term].
+input(Term, Datalog) ->
+   [input(T, Datalog) || T <- Term].
 
 
 

@@ -15,18 +15,28 @@
 %%
 -define(NULL,    {}).
 
+%%
+%% datalog heap context
 -record(datalog, {
-   ns   = undefined :: atom() %% data query global namespace (IStream interface)
-  ,heap = undefined :: any()  %% head state of the query 
+   mod    = undefined :: atom() %% stream interface module
+  ,state  = undefined :: any()  %% stream interface state
+  ,heap   = undefined :: any()  %% head state of the query 
 }).
 
 %%
 %% rule predicate
 -record(p, {
-   ns = undefined :: atom(),         %% predicate namespace (IStream interface)
-   id = undefined :: atom(),         %% predicate identity
-   t  = []        :: list(),         %% predicate terms    
-   s  = {}        :: datum:stream()  %% stream bound to predicate  
+   id   = undefined :: atom(),         %% predicate identity
+   t    = []        :: list(),         %% predicate terms    
+   s    = {}        :: datum:stream()  %% stream bound to predicate  
+}).
+
+%%
+%% rule filter
+-record(f, {
+   id   = undefined :: atom(),         %% predicate identity
+   t    = []        :: list(),         %% predicate terms    
+   s    = {}        :: datum:stream()  %% stream bound to predicate  
 }).
 
 

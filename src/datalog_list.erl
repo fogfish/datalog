@@ -18,10 +18,25 @@
 -module(datalog_list).
 
 -export([
-   like/3
+   like/4
 ]).
 
 
-like('_', '_', '_') ->
-   {ok, Terms} = file:consult(code:where_is_file("imdb.config")),
-   stream:build(Terms).
+like(List, '_', '_', '_') ->
+   stream:build(List);
+
+like(List,   A, '_', '_') ->
+   stream:filter(fun({X, _, _}) -> X =:= A end, stream:build(List));
+like(List, '_',   B, '_') ->
+   stream:filter(fun({_, Y, _}) -> Y =:= B end, stream:build(List));
+like(List, '_', '_',   C) ->
+   stream:filter(fun({_, _, Z}) -> Z =:= C end, stream:build(List));
+
+like(List,   A,   B, '_') ->
+   stream:filter(fun({X, Y, _}) -> X =:= A andalso Y =:= B end, stream:build(List));
+like(List,   A,  '_',  C) ->
+   stream:filter(fun({X, _, Z}) -> X =:= A andalso Z =:= C end, stream:build(List));
+like(List, '_', B,  C) ->
+   stream:filter(fun({_, Y, Z}) -> Y =:= B andalso Z =:= C end, stream:build(List)).
+   
+
