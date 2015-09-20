@@ -52,7 +52,6 @@ ingress(#p{s = {s, _, _} = Stream}=X, _Heap) ->
 ingress(#p{id = Id, t = Tx}=X, #datalog{mod = Mod, state = State} = Heap) ->
    try
       % stream is not defined if any of ingress arguments is not defined (eq '=')
-      % @todo: get module from Heap
       X#p{s = erlang:apply(Mod, Id, [State | datalog_t:input(Tx, Heap)])}
    catch throw:undefined ->
       X
