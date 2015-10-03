@@ -65,6 +65,13 @@ compile({'>', Id, Term}) ->
 compile({'<', Id, Term}) ->
    #f{id = '<', t = [Id], s = Term};
 
+compile({'>=', Id, Term}) ->
+   #f{id = '>=', t = [Id], s = Term};
+
+compile({'=<', Id, Term}) ->
+   #f{id = '=<', t = [Id], s = Term};
+
+
 %% compile horn clause
 compile({Id, Head, Body}) ->
    #h{id = Id, head = Head, body = [compile(X) || X <- Body]};
