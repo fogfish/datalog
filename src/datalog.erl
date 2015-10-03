@@ -26,6 +26,7 @@
   ,p/1
   ,test/1
 ]).
+-export_type([datalog/0]).
 
 %%
 %% data-types

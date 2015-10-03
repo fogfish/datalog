@@ -95,11 +95,11 @@ prepare(Any, Acc) ->
 %%
 %% optimize query, inject filters to egress terms
 filter({I, eg}, Cond) ->
-   case lists:keyfind([I], #p.t, Cond) of
-      false ->
+   case lists:filter(fun(X) -> X#f.t =:= [I] end, Cond) of
+      []   ->
          {I, eg};
-      #p{id = Id, s = Value} ->
-         {I, {Id, Value}}
+      List ->
+         {I, [{Id, Value} || #f{id = Id, s = Value} <- List]}
    end;
 
 filter({_, _}=Term, _Cond) ->

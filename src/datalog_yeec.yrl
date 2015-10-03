@@ -39,7 +39,7 @@ BODY -> ITEM :
 
 ITEM -> symbol '(' TERMS ')' :
    {unwrap('$1'), '$3'}.
-ITEM -> symbol GUARD lit :
+ITEM -> var GUARD lit :
    {'$2', unwrap('$1'), unwrap('$3')}.
 
 TERMS -> var ',' TERMS :

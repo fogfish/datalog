@@ -58,12 +58,15 @@ compile({Id, Term}) ->
    % compile predicate
    #p{id = Id, t = Term};
 
+%% compile built-in filter
 compile({'>', Id, Term}) ->
-   % compile built-in filter
    #f{id = '>', t = [Id], s = Term};
 
+compile({'<', Id, Term}) ->
+   #f{id = '<', t = [Id], s = Term};
+
+%% compile horn clause
 compile({Id, Head, Body}) ->
-   % compile horn clause
    #h{id = Id, head = Head, body = [compile(X) || X <- Body]};
 
 compile(Datalog) ->

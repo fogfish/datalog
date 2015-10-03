@@ -42,9 +42,44 @@ Example of Erlang native datalog
 }.
 ```
 
+### datalog to predicate
+
+#### match all
+```
+?- id(X, Y). 
+id(X, Y) :- like(X, Y).
+
+like('_', '_')
+```
+
+#### pattern match
+```
+?- id("A", Y). 
+id(X, Y) :- like(X, Y).
+
+like(<<"A">>, '_')
+```
+
+#### pattern match with clauses
+```
+?- id("A", Y). 
+id(X, Y) :- like(X, Y), Y > 10.
+
+like(<<"A">>, [{'>', 10}])
+```
+
+```
+?- id("A", Y). 
+id(X, Y) :- like(X, Y), Y > 10, Y < 20.
+
+like(<<"A">>, [{'>', 10}, {'<', 20}])
+```
+
+
+
 ## relation algebra vs datalog
 
-## intersection
+### intersection
 
 ```algebra
    a(X,Y) ⋀ b(X,Y)
@@ -54,7 +89,7 @@ Example of Erlang native datalog
    h(X,Y) :- a(X,Y), b(X,Y) 
 ```
 
-## union
+### union
 
 ```algebra
    a(X,Y) ⋁ b(X,Y)
