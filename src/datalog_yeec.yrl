@@ -18,7 +18,7 @@
 
 Nonterminals   DATALOG CLAUSES HORN BODY ITEM GUARD TERMS.
 Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' lit var symbol.
-Rootsymbol     DATALOG.
+Rootsymbol     CLAUSES.
 
 
 DATALOG -> '?-' symbol '(' TERMS ')' '.' CLAUSES :

@@ -38,13 +38,26 @@
 
 %% 
 %% evaluate datalog
--spec(q/3 :: (datalog(), any(), atom()) -> datum:stream()).
+-spec(q/3 :: (datalog(), any(), any()) -> datum:stream()).
 
-q(Datalog, Input, Mod) ->
-   {_Head, Goal, Rules} = datalog_c:make(Datalog),
-   Heap0 = heap_init(heap_size(Rules)),
-   Heap1 = lists:foldl(fun heap_defs/2, Heap0, Goal),
-   datalog_h:stream(hd(Rules), #datalog{mod = Mod, state=Input, heap = Heap1}).
+q(Datalog, #{'?' := Entry} = Goal, Funct) ->
+   Heap  = maps:fold(
+      fun
+      (_,   '_', Acc) -> Acc ; 
+      ('?',   _, Acc) -> Acc ; 
+      (Key, Val, Acc) -> maps:put(Key, Val, Acc)
+      end,
+      #{},
+      Goal
+   ),
+   datalog_h:stream(maps:get(Entry, Datalog), #{funct => Funct, heap => Heap}).
+
+
+% q(Datalog, Input, Mod) ->
+%    {_Head, Goal, Rules} = datalog_c:make(Datalog),
+%    Heap0 = heap_init(heap_size(Rules)),
+%    Heap1 = lists:foldl(fun heap_defs/2, Heap0, Goal),
+%    datalog_h:stream(hd(Rules), #datalog{mod = Mod, state=Input, heap = Heap1}).
 
 %%
 %% parse datalog
@@ -54,7 +67,7 @@ p(Datalog) ->
    try
       {ok, Lex, _} = datalog_leex:string(Datalog), 
       {ok, Req}    = datalog_yeec:parse(Lex),
-      Req
+      datalog(Req)
    catch
    _:{badmatch, {error, {_, rds_parser, Reason}}} ->
       {error, Reason}; 
@@ -77,32 +90,66 @@ test(Spec) ->
 %%%----------------------------------------------------------------------------
 
 %%
-%%
-heap_init(N) ->
-   erlang:make_tuple(N, '_').
+%% convert list of horn clauses to datalog map
+datalog(Horns) ->
+   lists:foldl(
+      fun({Horn, Head, Body}, Acc) ->
+         {Pattern, Filter} = lists:partition(fun(X) -> size(X) =:= 2 end, Body),
+         maps:put(Horn, [Head | horn(Pattern, Filter)], Acc)
+      end,
+      #{},
+      Horns 
+   ).
 
-%%
-%%
-heap_defs('_', Heap) ->
-   Heap;
-heap_defs({I, X}, Heap) ->
-   erlang:setelement(I, Heap, X).
+horn(Pattern, Filter) ->
+   [pattern(X, Filter) || X <- Pattern].
 
-%%
-%% resolve required heap size of datalog program
-heap_size(List)
- when is_list(List) ->
-   lists:max([heap_size(X) || X <- List]);
-heap_size(#h{body = List}) ->
-   lists:max([heap_size(X) || X <- List]);
-heap_size(#p{t = List}) ->
-   lists:max([heap_size(X) || X <- List]);
-heap_size(X)
- when is_tuple(X) ->
-   lists:max([heap_size(Y) || Y <- erlang:tuple_to_list(X)]);
-heap_size(X)
- when is_integer(X) ->
-   X;
-heap_size(_) ->
-   0.
+pattern({Id, Pattern}, Filter) ->
+   {Id, Pattern, lists:foldl(fun(X, Acc) -> filter(X, Filter, Acc) end, #{}, Pattern)}.
+
+
+filter(I, Filter, Acc) ->
+   case 
+      lists:filter(fun(X) -> erlang:element(2, X) =:= I end, Filter)
+   of
+      [] -> 
+         Acc;
+      Fs ->
+         case lists:keyfind('=:=', 1, Fs) of
+            false ->
+               maps:put(I, [{P, F} || {P, _, F} <- Fs], Acc);
+            {'=:=', _, F} ->
+               maps:put(I, F, Acc)
+         end
+   end.
+
+% %%
+% %%
+% heap_init(N) ->
+%    erlang:make_tuple(N, '_').
+
+% %%
+% %%
+% heap_defs('_', Heap) ->
+%    Heap;
+% heap_defs({I, X}, Heap) ->
+%    erlang:setelement(I, Heap, X).
+
+% %%
+% %% resolve required heap size of datalog program
+% heap_size(List)
+%  when is_list(List) ->
+%    lists:max([heap_size(X) || X <- List]);
+% heap_size(#h{body = List}) ->
+%    lists:max([heap_size(X) || X <- List]);
+% heap_size(#p{t = List}) ->
+%    lists:max([heap_size(X) || X <- List]);
+% heap_size(X)
+%  when is_tuple(X) ->
+%    lists:max([heap_size(Y) || Y <- erlang:tuple_to_list(X)]);
+% heap_size(X)
+%  when is_integer(X) ->
+%    X;
+% heap_size(_) ->
+%    0.
 

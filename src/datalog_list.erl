@@ -18,39 +18,35 @@
 -module(datalog_list).
 
 -export([
-   like/3
-  ,like/4
+   like/2
+  %  like/3
+  % ,like/4
 ]).
 
-like(List, '_', '_') ->
-   stream:build(List);
+like(Pattern, List) ->
+   maps:fold(fun match/3, stream:build(List), Pattern).
+ 
+match(Key, Filter, Stream)
+ when is_list(Filter) ->
+   lists:foldl(fun(F, Acc) -> filter(F, Key, Acc) end, Stream, Filter);
 
-like(List,   A, '_') ->
-   stream:filter(fun({X, _}) -> X =:= A end, stream:build(List));
-like(List, '_',   B) ->
-   stream:filter(fun({_, Y}) -> Y =:= B end, stream:build(List));
+match(Key, Val, Stream) ->
+   stream:filter(
+      fun(X) -> 
+         maps:get(Key, X) =:= Val 
+      end, 
+      Stream
+   ).   
+  
+filter({F, Val}, Key, Stream) ->
+   stream:filter(
+      fun(X) -> 
+         check(F, maps:get(Key, X), Val) 
+      end, 
+      Stream
+   ).
 
-like(List,   A,   B) ->
-   stream:filter(fun({X, Y}) -> X =:= A andalso Y =:= B end, stream:build(List)).
-
-
-like(List, '_', '_', '_') ->
-   stream:build(List);
-
-like(List,   A, '_', '_') ->
-   stream:filter(fun({X, _, _}) -> X =:= A end, stream:build(List));
-like(List, '_',   B, '_') ->
-   stream:filter(fun({_, Y, _}) -> Y =:= B end, stream:build(List));
-like(List, '_', '_',   C) ->
-   stream:filter(fun({_, _, Z}) -> Z =:= C end, stream:build(List));
-
-like(List,   A,   B, '_') ->
-   stream:filter(fun({X, Y, _}) -> X =:= A andalso Y =:= B end, stream:build(List));
-like(List,   A,  '_',  C) ->
-   stream:filter(fun({X, _, Z}) -> X =:= A andalso Z =:= C end, stream:build(List));
-like(List, '_',   B,  C) ->
-   stream:filter(fun({_, Y, Z}) -> Y =:= B andalso Z =:= C end, stream:build(List));
-   
-like(List,   A,   B,  C) ->
-   stream:filter(fun({X, Y, Z}) -> X =:= A andalso Y =:= B andalso Z =:= C end, stream:build(List)).
-
+check('>',  A, B) -> A >  B;
+check('>=', A, B) -> A >= B;
+check('<',  A, B) -> A  < B;
+check('=<', A, B) -> A =< B.

@@ -24,72 +24,52 @@
 
 %%
 %% evaluate horn clause to stream
-stream(#h{body = Body0}, Datalog) ->
-   Body1 = [X#p{t = datalog_t:rewrite(T, Datalog)} || X = #p{t = T} <- Body0],
-   stream(lists:reverse(Body1), Datalog);
+stream([_ | Body], Heap) ->
+   eval(lists:reverse(stack(Body)), Heap).
 
-stream(Body0, Datalog0) ->
-   case eval(Body0, Datalog0) of
-      {eof,       _} ->
+stack(Body) ->
+   [{Fun, Pat, Filter, stream:new()} || {Fun, Pat, Filter} <- Body].
+
+eval(Stack0, Heap0) ->
+   case run(Stack0, Heap0) of
+      {eof,      _} ->
          stream:new();
-      {#datalog{heap = Heap} = Datalog1, Body1} ->
-         stream:new(Heap, fun() -> stream(Body1, Datalog1) end)
+      {#{heap := H} = Heap1, Stack1} ->
+         stream:new(H, fun() -> eval(Stack1, Heap1) end)
    end.
 
 %%
 %% evaluate 
-eval([Head | Tail], Datalog) ->
-   accept(ingress(Head, Datalog), Tail, Datalog);
+run([Head | Tail], Heap) ->
+   accept(ingress(Head, Heap), Tail, Heap);
 
-eval([], _Datalog) ->
+run([], _Heap) ->
    {eof, []}.
 
 %%
 %%
-accept(#p{s = ?NULL}=Head, Tail0, Datalog0) ->
-   case eval(Tail0, Datalog0) of
+accept({_, _, _, ?NULL}=Head, Tail0, Heap0) ->
+   case run(Tail0, Heap0) of
       {eof,   Tail1} ->
          {eof, [Head | Tail1]};
-      {Datalog1, Tail1} ->
-         accept(ingress(Head, Datalog1), Tail1, Datalog1)
+      {Heap1, Tail1} ->
+         accept(ingress(Head, Heap1), Tail1, Heap1)
    end;
 
-accept(#p{s = Stream, t = Vx}=Head, Tail, #datalog{heap=Heap0}=Datalog) ->
-   Heap1 = heap(Vx, stream:head(Stream), Heap0),
-   {Datalog#datalog{heap =Heap1}, [Head | Tail]}.
-
+accept({_, _, _, Stream}=Head, Tail, #{heap := H} = Heap) ->
+   {Heap#{heap => maps:merge(H, stream:head(Stream))}, [Head | Tail]}.
 
 %%
-%% evaluate predicate stream 
-ingress(#p{s = {s, _, _} = Stream}=X, _Heap) ->
-   X#p{s = stream:tail(Stream)};
+%% evaluate predicate stream (ingress data stream to heap)
+ingress({Fun, Pat, Filter, {s, _, _} = Stream}, _Heap) ->
+   {Fun, Pat, Filter, stream:tail(Stream)};
 
-ingress(#p{id = Id, t = Tx}=X, #datalog{mod = Mod, state = State} = Heap) ->
+ingress({Fun, Pat, Filter, _} = E, #{funct := {Mod, State}, heap := Heap}) ->
    try
-      % stream is not defined if any of ingress arguments is not defined (eq '=')
-      X#p{s = erlang:apply(Mod, Id, [State | datalog_t:input(Tx, Heap)])}
+      %% input is current heap value, each expected variable is bound with its value 
+      %% and extended with possible filters
+      Stream = Mod:Fun(maps:merge(Filter, maps:with(Pat, Heap)), State),
+      {Fun, Pat, Filter, Stream}
    catch throw:undefined ->
-      X
+      E
    end.
-
-%%
-%% update heap
-vx({X, _}, Heap) ->
-   erlang:element(X, Heap);
-
-vx(X, Heap) ->
-   erlang:element(X, Heap).
-
-vx({X, _}, Val, Heap) ->
-   erlang:setelement(X, Heap, Val).
-
-heap(Vx, Head, Heap) ->
-   erlang:element(2,
-      lists:foldl(
-         fun(X, {I, Acc}) ->
-            {I + 1, vx(X, vx(I, Head), Acc)}
-         end,
-         {1, Heap},
-         Vx 
-      )
-   ). 

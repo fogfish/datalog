@@ -33,6 +33,18 @@ The library supports two notations for datalog:
 -type(bind()    :: [any()]).
 ```
 
+datalog 
+#{ id => [ [x,y], {like, [x, name, y]}]} }
+
+goal
+#{'?' => id, x => '_', y => <<"Ridley Scott">>}
+
+compiled program (by make) 
+#{ id => [ [x,y], #{id => like, t => [x, name, y], s => ? }]} }
+
+
+
+
 Example of Erlang native datalog
 ```
 {id, [x, <<"Ridley Scott">>], 
