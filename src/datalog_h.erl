@@ -24,8 +24,11 @@
 
 %%
 %% evaluate horn clause to stream
-stream([_ | Body], Heap) ->
-   eval(lists:reverse(stack(Body)), Heap).
+stream([Head | Body], Heap) ->
+   stream:map(
+      fun(X) -> maps:with(Head, X) end,
+      eval(lists:reverse(stack(Body)), Heap)
+   ).
 
 stack(Body) ->
    [{Fun, Pat, Filter, stream:new()} || {Fun, Pat, Filter} <- Body].
@@ -68,8 +71,17 @@ ingress({Fun, Pat, Filter, _} = E, #{funct := {Mod, State}, heap := Heap}) ->
    try
       %% input is current heap value, each expected variable is bound with its value 
       %% and extended with possible filters
-      Stream = Mod:Fun(maps:merge(Filter, maps:with(Pat, Heap)), State),
+      Input   = maps:merge(Filter, maps:with(Pat, Heap)),
+      Pattern = [mget(X, Input) || X <- Pat],
+      Stream  = erlang:apply(Mod, Fun, [State | Pattern]),
       {Fun, Pat, Filter, Stream}
    catch throw:undefined ->
       E
    end.
+
+mget(Key, Map)
+ when is_atom(Key) ->
+   {Key, maps:get(Key, Map, '_')};
+mget(Key, _) ->
+   Key.
+
