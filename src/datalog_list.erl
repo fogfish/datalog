@@ -18,19 +18,24 @@
 -module(datalog_list).
 
 -export([
-   like/4
+   stream/2
+   % like/4
   %  like/3
   % ,like/4
 ]).
 
 
-like(List, A, B, C) ->
-   stream:map(
-      fun({X, Y, Z}) ->
-         maps:put(A, X, maps:put(B, Y, maps:put(C, Z, #{})))
-      end,
-      stream:build(List)
-   ).
+stream(List, _) ->
+   stream:build(List).
+
+
+% like(List, A, B, C) ->
+%    stream:map(
+%       fun({X, Y, Z}) ->
+%          maps:put(A, X, maps:put(B, Y, maps:put(C, Z, #{})))
+%       end,
+%       stream:build(List)
+%    ).
 
 % like(List, A, B, C) ->
 %    io:format("==> a ~p~n", [A]),
