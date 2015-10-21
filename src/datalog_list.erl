@@ -18,58 +18,78 @@
 -module(datalog_list).
 
 -export([
-   stream/2
-   % like/4
-  %  like/3
-  % ,like/4
+   stream/1
 ]).
 
+%%
+%%
+stream(Expr) ->
+   fun(Heap) ->
+      fun(X) ->
+         stream(X, Heap, Expr)
+      end
+   end.
 
-stream(List, _) ->
-   stream:build(List).
+stream(X, Heap, #{'_' := Head}) ->
+   Nary = length(Head),
+   head(Head,
+      match(Head, Heap, 
+         list(Nary, X)
+      )
+   ).
 
-
-% like(List, A, B, C) ->
-%    stream:map(
-%       fun({X, Y, Z}) ->
-%          maps:put(A, X, maps:put(B, Y, maps:put(C, Z, #{})))
-%       end,
-%       stream:build(List)
-%    ).
-
-% like(List, A, B, C) ->
-%    io:format("==> a ~p~n", [A]),
-%    io:format("==> b ~p~n", [B]),
-%    io:format("==> c ~p~n", [C]),
-%    stream:build(List).
-
-
-like(Pattern, List) ->
-   % match(Pattern, 1, #{}, stream:build(List)).
-   maps:fold(fun match/3, stream:build(List), Pattern).
- 
-% match()
-
-
-
-
-
-match(Key, Filter, Stream)
- when is_list(Filter) ->
-   lists:foldl(fun(F, Acc) -> filter(F, Key, Acc) end, Stream, Filter);
-
-match(Key, Val, Stream) ->
+%%
+%% 
+list(Nary, List) ->
    stream:filter(
       fun(X) -> 
-         maps:get(Key, X) =:= Val 
+         is_tuple(X) andalso size(X) =:= Nary
+      end,
+      stream:build(List)
+   ).
+
+%%
+%%
+head(Head, Stream) ->
+   stream:map(
+      fun(X) ->
+         maps:from_list( lists:zip(Head, tuple_to_list(X)) )
+      end,
+      Stream
+   ).
+
+match(Head, Heap, Stream) ->
+   match(1, Head, Heap, Stream).
+
+match(I, [H|T], Heap, Stream) ->
+   match(I + 1, T, Heap,
+      pattern(maps:get(H, Heap, undefined), I, Stream)
+   );
+
+match(_, [], _, Stream) ->
+   Stream.
+
+%%
+%%
+pattern(undefined, _, Stream) ->
+   Stream;
+
+pattern(Filter, I, Stream)
+ when is_list(Filter) ->
+   lists:foldl(fun(F, Acc) -> filter(F, I, Acc) end, Stream, Filter);
+
+pattern(Val, I, Stream) ->
+   stream:filter(
+      fun(X) -> 
+         erlang:element(I, X) =:= Val 
       end, 
       Stream
    ).   
   
-filter({F, Val}, Key, Stream) ->
+filter({F, Val}, I, Stream) ->
    stream:filter(
       fun(X) -> 
-         check(F, maps:get(Key, X), Val) 
+         check(F, erlang:element(I, X), Val) 
       end, 
       Stream
    ).

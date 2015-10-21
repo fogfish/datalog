@@ -66,30 +66,14 @@ eval(X, Expr) ->
 
 %%%----------------------------------------------------------------------------
 %%%
-%%% primitive data types
+%%% built-in data type evaluator
 %%%
 %%%----------------------------------------------------------------------------
 
-list(#{'_' := Head}) ->
-   Len = length(Head),
-   fun(Heap) ->
-      %% how to exclude from binding input / output variables ?
-      io:format("==> ~p  ~p~n", [Head, Heap]),
-      %% @todo: binding
-      fun(List) ->
-         stream:map(
-            fun(X) ->
-               maps:from_list( lists:zip(Head, tuple_to_list(X)) )
-            end,
-            stream:filter(
-               fun(X) -> 
-                  is_tuple(X) andalso size(X) =:= Len
-               end,
-               stream:build(List)
-            )
-         )
-      end
-   end.
+%%
+%% 
+list(Expr) ->
+   datalog_list:stream(Expr).
 
 
 

@@ -41,35 +41,48 @@ stream(X, Heap0, Horn0) ->
 
 %%
 %% evaluate horn clause head
-eval(X, Heap, [{Stream0, Fun}]) ->
+eval(_, Heap, [{Stream0, Keys, Fun}]) ->
    case stream:tail(Stream0) of
       ?NULL   ->
          throw(eos);
       Stream1 ->
-         {heap(Heap, Stream1), [{Stream1, Fun}]}
+         {heap(Heap, Stream1), [{Stream1, Keys, Fun}]}
    end;
 
 eval(X, Heap, [Fun]) ->
    Stream = f(X, Heap, Fun),
-   {heap(Heap, Stream), [{Stream, Fun}]};
+   Keys   = keys(Heap, Stream),
+   {heap(Heap, Stream), [{Stream, Keys, Fun}]};
 
-eval(X, Heap, [{Stream0, Fun} | Tail]) ->
+eval(X, Heap, [{Stream0, Keys, Fun} | Tail]) ->
    case stream:tail(Stream0) of
       ?NULL   ->
-         eval(X, Heap, [Fun | Tail]);
+         %% withdraw keys
+         eval(X, maps:without(Keys, Heap), [Fun | Tail]);
       Stream1 ->
-         {heap(Heap, Stream1), [{Stream1, Fun} | Tail]}
+         {heap(Heap, Stream1), [{Stream1, Keys, Fun} | Tail]}
    end;
 
 eval(X, Heap0, [Fun | Tail0]) ->
    {Heap1, Tail1} = eval(X, Heap0, Tail0),
    Stream = f(X, Heap1, Fun),
-   {heap(Heap1, Stream), [{Stream, Fun} | Tail1]}.
+   Keys   = keys(Heap1, Stream),
+   {heap(Heap1, Stream), [{Stream, Keys, Fun} | Tail1]}.
 
 %%
 %%
 heap(Heap, Stream) ->
    maps:merge(Heap, stream:head(Stream)).
+
+%%
+%% captures set of key defined by expression 
+keys(Heap, Stream) ->
+   maps:keys(
+      maps:without(
+         maps:keys(Heap), 
+         stream:head(Stream)
+      )
+   ).
 
 %%
 %%
