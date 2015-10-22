@@ -30,10 +30,10 @@ stream(Expr) ->
       end
    end.
 
-stream(X, Heap, #{'_' := Head}) ->
+stream(X, Heap, #{'_' := Head} = Expr) ->
    Nary = length(Head),
    head(Head,
-      match(Head, Heap, 
+      match(Head, maps:merge(Expr, Heap), 
          list(Nary, X)
       )
    ).
@@ -53,7 +53,12 @@ list(Nary, List) ->
 head(Head, Stream) ->
    stream:map(
       fun(X) ->
-         maps:from_list( lists:zip(Head, tuple_to_list(X)) )
+         maps:from_list( 
+            lists:filter(
+               fun({Key, _}) -> is_atom(Key) end,
+               lists:zip(Head, tuple_to_list(X))
+            )
+         )
       end,
       Stream
    ).
@@ -61,9 +66,14 @@ head(Head, Stream) ->
 match(Head, Heap, Stream) ->
    match(1, Head, Heap, Stream).
 
-match(I, [H|T], Heap, Stream) ->
+match(I, [H|T], Heap, Stream)
+ when is_atom(H) ->
    match(I + 1, T, Heap,
       pattern(maps:get(H, Heap, undefined), I, Stream)
+   );
+match(I, [H|T], Heap, Stream) ->
+   match(I + 1, T, Heap,
+      pattern(H, I, Stream)
    );
 
 match(_, [], _, Stream) ->

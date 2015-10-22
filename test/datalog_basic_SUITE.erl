@@ -96,46 +96,52 @@ end_per_group(_, _Config) ->
    {a,1}, {b,1}, {c,2}, {d,2}, {e,3}, {f,3}, {g,4}, {h,4}, {i,5}, {j,5}
 ]).
 
-
 %%
 %%
 basic_all(_) ->
-   ?LIST = stream:list( datalog:q( datalog_all(), ?LIST, datalog_list) ).
-
+   Eval  = datalog:q(
+      datalog:horn([x,y], [
+         datalog:list(#{'_' => [x,y]})
+      ])
+   ),
+   ?LIST = stream:list( 
+      stream:map(
+         fun(#{x := X, y := Y}) ->
+            {X, Y}
+         end,
+         Eval(?LIST)
+      )
+   ).
 
 %%
 %%
 imdb_person_1(Config) ->
-   Actor =  <<"Ridley Scott">>,
-   [{<<"urn:person:137">>, name, Actor}] = stream:list(
-      datalog:q( datalog_person_1(Actor), ?config(imdb, Config), datalog_list )
-   ).
+   Eval  = datalog:q(
+      datalog:horn([a,b,c], [
+         datalog:list(#{'_' => [a,b,c], b => name, c => <<"Ridley Scott">>})
+      ])
+   ),
+   [
+      #{
+         a := <<"urn:person:137">>, 
+         b := name, 
+         c := <<"Ridley Scott">>
+      }
+   ] = stream:list( Eval(?config(imdb, Config)) ).
 
+%%
+%%
 imdb_person_2(Config) ->
-   Actor =  <<"Ridley Scott">>,
-   [{<<"urn:person:137">>, name, Actor}] = stream:list(
-      datalog:q( datalog_person_2(Actor), ?config(imdb, Config), datalog_list )
-   ).
-
-
-datalog_all() ->
-   {all, [x,y], 
-      [
-         {all, [x,y], [ {like, [x,y]} ]}
-      ]
-   }.
-
-datalog_person_1(Actor) ->
-   {id, [x,name, Actor],
-      [
-         {id, [x,y,z], [ {like, [x,y,z]} ]}
-      ]
-   }.
-
-datalog_person_2(Actor) ->
-   {id, [x,Actor],
-      [
-         {id, [x,z], [ {like, [x,name,z]} ]}
-      ]
-   }.
+   Eval  = datalog:q(
+      #{c => <<"Ridley Scott">>},
+      datalog:horn([a,c], [
+         datalog:list(#{'_' => [a,b,c], b => name})
+      ])
+   ),
+   [
+      #{
+         a := <<"urn:person:137">>, 
+         c := <<"Ridley Scott">>
+      }
+   ] = stream:list( Eval(?config(imdb, Config)) ).
 

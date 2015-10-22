@@ -1,5 +1,5 @@
 %%
-%%   Copyright 2014 - 2015 Dmitry Kolesnikov, All Rights Reserved
+%%   Copyright 2014 Dmitry Kolesnikov, All Rights Reserved
 %%
 %%   Licensed under the Apache License, Version 2.0 (the "License");
 %%   you may not use this file except in compliance with the License.
@@ -21,113 +21,70 @@
 -module(datalog).
 -include("datalog.hrl").
 
+%% evaluator interface
 -export([
-   q/3
-  ,p/1
-  ,test/1
+   horn/2, 
+   q/1, 
+   q/2
 ]).
+%% build-in data types
 -export([
-   head/2,
-   unit/3,
-   list/1,
-   horn/1,
-   eval/2
-   % sigma/2,
-   % sigma/1
-   % bind/3,
-   % apply/2
+   list/1
 ]).
--export_type([datalog/0]).
-
-head(Head, Stream) ->
-   stream:map(
-      fun(X) -> 
-         maps:with(Head, X) 
-      end,
-      Stream
-   ).
-
-unit(Heap, Head, Stream) ->
-   stream:map(
-      fun(X) ->
-         maps:merge(Heap, stream:head(Stream))
-      end,
-      Stream
-   ).
-
-horn(List) ->
-   datalog_horn:stream(List).
+%% compiler interface
+-export([
+   p/1,
+   c/1,
+   c/2,
+   test/1
+]).
 
 %%
+%% data types
+-type(head()    :: [atom()]).
+-type(pattern() :: #{'_' => head()}).
+
 %%
-eval(X, Expr) ->
-   Fun = Expr(#{}),
-   Fun(X).
+%% build horn clause evaluator
+-spec(horn/2 :: (head(), [any()]) -> any()).
+
+horn(Head, List) ->
+   datalog_horn:stream(Head, List).
+
+%%
+%% build datalog query evaluator
+-spec(q/1 :: (any()) -> any()).
+-spec(q/2 :: (any(), any()) -> datum:stream()).
+
+q(Expr) ->
+   Expr(#{}).
+
+q(X, Expr) ->
+   Expr(X).
 
 %%%----------------------------------------------------------------------------
 %%%
-%%% built-in data type evaluator
+%%% built-in evaluator
 %%%
 %%%----------------------------------------------------------------------------
 
 %%
-%% 
-list(Expr) ->
-   datalog_list:stream(Expr).
+%% build list evaluator using pattern-match specification
+-spec(list/1 :: (pattern()) -> any()).
+
+list(Pattern) ->
+   datalog_list:stream(Pattern).
 
 
-
-
-
-
-%%
-%% data-types
--type(datalog() :: {atom(), bind(), [horn()]}).
--type(horn()    :: {atom(), bind(), [pred()]}).
--type(pred()    :: {atom(), bind()}).
--type(bind()    :: [any()]).
-
-%%
-%%
-sigma(Head, Pattern) ->
-   lists:foldl(
-      fun({Key, Val}, Acc) ->
-         maps:put(Key, Val, Acc)
-      end,
-      #{'_' => Head},
-      Pattern
-   ).
-
-sigma(Head) ->
-   sigma(Head, []).   
-
-
-%% 
-%% evaluate datalog
--spec(q/3 :: (datalog(), any(), any()) -> datum:stream()).
-
-q(Datalog, #{'?' := Entry} = Goal, Funct) ->
-   Heap  = maps:fold(
-      fun
-      (_,   '_', Acc) -> Acc ; 
-      ('?',   _, Acc) -> Acc ; 
-      (Key, Val, Acc) -> maps:put(Key, Val, Acc)
-      end,
-      #{},
-      Goal
-   ),
-   datalog_h:stream(maps:get(Entry, Datalog), #{funct => Funct, heap => Heap}).
-
-
-% q(Datalog, Input, Mod) ->
-%    {_Head, Goal, Rules} = datalog_c:make(Datalog),
-%    Heap0 = heap_init(heap_size(Rules)),
-%    Heap1 = lists:foldl(fun heap_defs/2, Heap0, Goal),
-%    datalog_h:stream(hd(Rules), #datalog{mod = Mod, state=Input, heap = Heap1}).
+%%%----------------------------------------------------------------------------
+%%%
+%%% compiler
+%%%
+%%%----------------------------------------------------------------------------
 
 %%
 %% parse datalog
--spec(p/1 :: (string()) -> datalog()).
+-spec(p/1 :: (string()) -> any()).
 
 p(Datalog) ->
    try
@@ -142,6 +99,21 @@ p(Datalog) ->
    _:{badmatch, Error} ->
       Error
    end. 
+
+%%
+%% compile datalog
+-spec(c/1 :: (any()) -> any()).
+
+c(Datalog) ->
+   c(datalog, Datalog).
+
+c(Mod, Datalog) ->
+   [Head | Horn] = hd(maps:values(Datalog)),
+   datalog:q(
+      datalog:horn(Head,
+         [Mod:Fun(Pat) || {Fun, Pat} <- Horn]
+      )
+   ).
 
 %%
 %% helper function to kick unit test
@@ -161,18 +133,24 @@ datalog(Horns) ->
    lists:foldl(
       fun({Horn, Head, Body}, Acc) ->
          {Pattern, Filter} = lists:partition(fun(X) -> size(X) =:= 2 end, Body),
-         maps:put(Horn, [Head | horn(Pattern, Filter)], Acc)
+         maps:put(Horn, [Head | hornx(Pattern, Filter)], Acc)
       end,
       #{},
       Horns 
    ).
 
-horn(Pattern, Filter) ->
+hornx(Pattern, Filter) ->
    [pattern(X, Filter) || X <- Pattern].
 
 pattern({Id, Pattern}, Filter) ->
-   {Id, Pattern, lists:foldl(fun(X, Acc) -> filter(X, Filter, Acc) end, #{}, Pattern)}.
-
+   Spec = lists:foldl(
+      fun(X, Acc) -> 
+         filter(X, Filter, Acc) 
+      end, 
+      #{'_' => Pattern},
+      Pattern
+   ),
+   {Id, Spec}.
 
 filter(I, Filter, Acc) ->
    case 
@@ -188,34 +166,4 @@ filter(I, Filter, Acc) ->
                maps:put(I, F, Acc)
          end
    end.
-
-% %%
-% %%
-% heap_init(N) ->
-%    erlang:make_tuple(N, '_').
-
-% %%
-% %%
-% heap_defs('_', Heap) ->
-%    Heap;
-% heap_defs({I, X}, Heap) ->
-%    erlang:setelement(I, Heap, X).
-
-% %%
-% %% resolve required heap size of datalog program
-% heap_size(List)
-%  when is_list(List) ->
-%    lists:max([heap_size(X) || X <- List]);
-% heap_size(#h{body = List}) ->
-%    lists:max([heap_size(X) || X <- List]);
-% heap_size(#p{t = List}) ->
-%    lists:max([heap_size(X) || X <- List]);
-% heap_size(X)
-%  when is_tuple(X) ->
-%    lists:max([heap_size(Y) || Y <- erlang:tuple_to_list(X)]);
-% heap_size(X)
-%  when is_integer(X) ->
-%    X;
-% heap_size(_) ->
-%    0.
 

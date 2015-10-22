@@ -18,14 +18,17 @@
 -module(datalog_horn).
 -include("datalog.hrl").
 
--export([stream/1]).
+-export([stream/2]).
 
 %%
 %%
-stream(Horn) ->
+stream(Head, Horn) ->
    fun(Heap) ->
       fun(X) ->
-         stream(X, Heap, lists:reverse(Horn))
+         stream:map(
+            fun(Y) -> maps:with(Head, Y) end,
+            stream(X, Heap, lists:reverse(Horn))
+         )
       end
    end.
 
@@ -70,7 +73,7 @@ eval(X, Heap0, [Fun | Tail0]) ->
    {heap(Heap1, Stream), [{Stream, Keys, Fun} | Tail1]}.
 
 %%
-%%
+%% update heap
 heap(Heap, Stream) ->
    maps:merge(Heap, stream:head(Stream)).
 
