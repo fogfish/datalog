@@ -17,7 +17,7 @@
 %%   datalog
 
 Nonterminals   DATALOG CLAUSES HORN BODY ITEM GUARD TERMS.
-Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' lit var symbol.
+Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' '_' lit var symbol.
 Rootsymbol     CLAUSES.
 
 
@@ -48,12 +48,16 @@ TERMS -> lit ',' TERMS :
    [unwrap('$1') | '$3'].
 TERMS -> symbol ',' TERMS :
    [unwrap('$1') | '$3'].
+TERMS -> '_' ',' TERMS :
+   ['_' | '$3'].
 TERMS -> var :
    [unwrap('$1')].
 TERMS -> lit :
    [unwrap('$1')].
 TERMS -> symbol :
    [unwrap('$1')].
+TERMS -> '_' :
+   ['_'].
 
 %%
 %%
