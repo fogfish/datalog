@@ -31,6 +31,7 @@
    basic_all/1
   ,imdb_person_1/1
   ,imdb_person_2/1
+  ,imdb_actor_of/1
 ]).
 
 %%%----------------------------------------------------------------------------   
@@ -52,6 +53,7 @@ groups() ->
      ,{imdb,  [], [
          imdb_person_1
         ,imdb_person_2
+        ,imdb_actor_of
       ]}
    ].
 
@@ -75,9 +77,13 @@ end_per_suite(_Config) ->
 
 %%   
 %%
+init_per_group(basic, Config) ->
+   List = [{a,1}, {b,1}, {c,2}, {d,2}, {e,3}, {f,3}, {g,4}, {h,4}, {i,5}, {j,5}],
+   [{list, List} | Config];
+
 init_per_group(imdb, Config) ->
    {ok, List} = file:consult(code:where_is_file("imdb.config")),
-   [{imdb, List} | Config];
+   [{list, List} | Config];
 
 init_per_group(_, Config) ->
    Config.
@@ -92,24 +98,22 @@ end_per_group(_, _Config) ->
 %%% unit test
 %%%
 %%%----------------------------------------------------------------------------   
--define(LIST, [
-   {a,1}, {b,1}, {c,2}, {d,2}, {e,3}, {f,3}, {g,4}, {h,4}, {i,5}, {j,5}
-]).
 
 %%
 %%
-basic_all(_) ->
+basic_all(Config) ->
    Eval  = datalog:q(
       datalog:horn([x,y], [
          datalog:list(#{'_' => [x,y]})
       ])
    ),
-   ?LIST = stream:list( 
+   List = ?config(list, Config),
+   List = stream:list( 
       stream:map(
          fun(#{x := X, y := Y}) ->
             {X, Y}
          end,
-         Eval(?LIST)
+         Eval(List)
       )
    ).
 
@@ -127,7 +131,7 @@ imdb_person_1(Config) ->
          b := name, 
          c := <<"Ridley Scott">>
       }
-   ] = stream:list( Eval(?config(imdb, Config)) ).
+   ] = stream:list( Eval(?config(list, Config)) ).
 
 %%
 %%
@@ -143,5 +147,22 @@ imdb_person_2(Config) ->
          a := <<"urn:person:137">>, 
          c := <<"Ridley Scott">>
       }
-   ] = stream:list( Eval(?config(imdb, Config)) ).
+   ] = stream:list( Eval(?config(list, Config)) ).
 
+
+%%
+%%
+imdb_actor_of(Config) ->
+   Eval = datalog:q(
+      #{t => <<"Lethal Weapon">>},
+      datalog:horn([n], [
+         datalog:list(#{'_' => [m,x,t], x => title}),
+         datalog:list(#{'_' => [m,y,p], y => cast}),
+         datalog:list(#{'_' => [p,z,n], z => name})
+      ])
+   ),
+   [
+      #{n := <<"Mel Gibson">>},
+      #{n := <<"Danny Glover">>},
+      #{n := <<"Gary Busey">>}
+   ] = stream:list( Eval(?config(list, Config)) ).

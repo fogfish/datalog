@@ -68,9 +68,13 @@ eval(X, Heap, [{Stream0, Keys, Fun} | Tail]) ->
 
 eval(X, Heap0, [Fun | Tail0]) ->
    {Heap1, Tail1} = eval(X, Heap0, Tail0),
-   Stream = f(X, Heap1, Fun),
-   Keys   = keys(Heap1, Stream),
-   {heap(Heap1, Stream), [{Stream, Keys, Fun} | Tail1]}.
+   case f(X, Heap1, Fun) of
+      ?NULL  ->
+         eval(X, Heap1, [Fun | Tail1]);
+      Stream ->
+         Keys   = keys(Heap1, Stream),
+         {heap(Heap1, Stream), [{Stream, Keys, Fun} | Tail1]}
+   end.
 
 %%
 %% update heap
