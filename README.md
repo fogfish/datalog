@@ -1,16 +1,77 @@
 # datalog
 
-The library implements a simplified version of query engine using _logic programming_ paradigm. The logic program consists of finite set of facts (knowledge base) and rules. The rules are used to deduce new facts from other facts. The knowledge base is abstracted using streams to retrieve ground facts and feed them to logic engine.  
+The library implements an ad-hoc query engine using simplified version of general _logic programming_ paradigm. It is designed for applications that uses a large number of ground facts persisted in external storage. 
 
-The Horn clauses formally defines rules
+
+
+## background
+
+The logic program consists of finite set of rules and large volume of ground facts -- knowledge. The rules are used to deduce new facts from other facts. The Horn clauses formally defines rules (first-order formula)
 
 ```
    L0 :- L1, ..., Ln
 ```
 
-L0 is a rule head, it is a producer of new facts deducted by body expression. The body is a conjunction of statement, built-in functions and filters. Each Li consist of predicate symbol and terms sucn as p(t1, ..., tk). A term is either a constant or a variable. The library reflect each predicate to another horn clause or stream of facts.
+L0 is a rule head, it is a producer of new facts deducted by body expression. The body is a conjunction of statement, built-in functions and filters. Each `Li` consist of predicate symbol and terms such as `p(t1, ..., tk)`. A term is either a constant or a variable. The rules can be expressed using relational algebra. The head is a derived relation, deducted through the _logical program_ and ground facts. It is not explicitly persisted anywhere and corresponds the relation view (projection). The materialization of these view is the main task of this library. Body predicates refers either to derived relations or ground facts. Ground facts are physically stored in external memory -- the library assumes that each predicated corresponds to exactly one persistent relation such that each ground fact `p(t1, ..., tk)` is retrieved as a tuple `(t1, ..., tk)`. The predicates with common variables give rise to join. 
+
+
+The library uses a "functional" interpretation of predicates, any predicate is a function -- sigma expression. It associates some of its bound arguments to the remaining ones, returning the lazy set of tuples corresponding to materialized predicate. For example if p is binary predicate, its σ function is denoted as
+
+```
+σ(S) -> { y | x ∈ S ^ p(x, y) }
+```
+
+The interpreter translate goals of rules into algebraic queries with an objective to access the minimum of ground facts needed in order to determine the answer. Rules are a compiled to composition of σ functions (sub-queries). They are recursively expanded and the evaluation of the current sub-query is postponed until the new sub-query has been completely solved. 
+
+The define sigma expression formalism translates purely declarative semantic into operational semantic, i.e. specify of query must be executed. The lazy set ensures simplicity of one-tuple-at-a-time evaluation strategy while preserving efficiency of set-oriented methods used by high-level query languages. Sigma expression is the formalism to relate logic program to external storage (most common query languages, access methodologies, i/o interfaces).
+
+
+
+## σ function
+
+The sigma function is the formalism to relate logic program to ground facts persisted by external storage. The datalog library uses sigma algebra to evaluate logic program but it requires developers to implement corresponding sigma(s) (access protocols) supported by external storage. This is an abstraction interface to retrieve ground facts _matching_ predicate. The library hides the concerns of logical program evaluation but requires developers to implement access protocols. The library provides a naive reference implementation of Erlang lists (see `datalog_list`).  
+
+The type of σ function is defined as following. The `datalog:pattern()` and `datalog:heap()` carries the values of bound arguments so that sigma function return all tuples matching the pattern.
+
+```
+-spec sigma( datalog:pattern() ) -> fun( (datalog:heap()) -> fun( (_) -> datum:stream() ) ).
+```
+
+
+
+
+
+
+
+## Reference
+
+1. [What You Always Wanted to Know About Datalog (And Never Dared to Ask)](http://www.csd.uoc.gr/~hy562/1112_spring/instr_material/WhatYouAlwaysWantedtoKnowAboutDatalog_AndNeverDaredtoAsk.pdf)
+
+
+
+
+<!--
+
+
+
+
+
+
+
+
+Example of horn clause with `X`, `Y`, `Z` variables and `year`, `title`, `1987` constants:
+```
+   title(Z) :- list(X, year, Y), list(X, title, Z), Y = 1987.
+```
+
+
+
+The library reflect each predicate to another horn clause or stream of facts.
 
 Each datalog program has a goal that defines a subset of required relation.
+
+
+The knowledge base is abstracted using streams to retrieve ground facts and feed them to logic engine.
 
 Example of datalog program
 ```
@@ -116,3 +177,6 @@ like(<<"A">>, [{'>', 10}, {'<', 20}])
 
 1. http://ion.uwinnipeg.ca/~ychen2/journalpapers/StratifiedDB.pdf
 1. http://www.cs.toronto.edu/~drosu/csc343-l7-handout6.pdf
+
+-->
+

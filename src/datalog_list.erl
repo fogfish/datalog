@@ -23,6 +23,8 @@
 
 %%
 %%
+-spec stream( datalog:pattern() ) -> fun( (datalog:heap()) -> fun( (_) -> datum:stream() ) ).
+
 stream(Expr) ->
    fun(Heap) ->
       fun(X) ->
@@ -31,6 +33,7 @@ stream(Expr) ->
    end.
 
 stream(X, Heap, #{'_' := Head} = Expr) ->
+   %% @todo: abstract heap and heap ops using datalog interface
    Nary = length(Head),
    head(Head,
       match(Head, maps:merge(Expr, Heap), 

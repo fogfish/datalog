@@ -111,7 +111,7 @@ c(Mod, Datalog) ->
    [Head | Horn] = hd(maps:values(Datalog)),
    datalog:q(
       datalog:horn(Head,
-         [Mod:Fun(Pat) || {Fun, Pat} <- Horn]
+         [Mod:Fun(Pat) || {Fun, Pat} <- Horn] %% TODO: check if Fun implemented by Mod
       )
    ).
 
