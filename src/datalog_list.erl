@@ -34,10 +34,9 @@ sigma(Expr) ->
    end.
 
 stream(X, Heap, #{'_' := Head} = Expr) ->
-   %% @todo: abstract heap and heap ops using datalog interface
    Nary = length(Head),
    head(Head,
-      match(Head, maps:merge(Expr, Heap), 
+      match(Head, datalog:bind(Heap, Expr), 
          list(Nary, X)
       )
    ).

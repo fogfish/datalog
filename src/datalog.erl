@@ -25,7 +25,8 @@
 -export([
    horn/2, 
    q/1, 
-   q/2
+   q/2,
+   bind/2
 ]).
 %% build-in data types
 -export([
@@ -59,7 +60,7 @@
 
 %% sigma function
 -type eval()    :: fun( (_) -> datum:stream() ).
--type heap()    :: fun( (#{}) -> eval() ).
+-type heap()    :: fun( (map()) -> eval() ).
 
 %%%----------------------------------------------------------------------------
 %%%
@@ -84,6 +85,18 @@ q(Expr) ->
 
 q(X, Expr) ->
    Expr(X).
+
+%%
+%% bind sigma pattern with resolved variable (resolved previously by sigma)  
+-spec bind(map(), pattern()) -> pattern().
+
+bind(Heap, Pattern) ->
+   % maps:merge(...) provides out-of-implementation for the library
+   % it merges two maps into a single map. if two keys (variables) exists in both maps 
+   % the value in Pattern will be superseded by the value in Heap.
+   % Thus any BIF are converted to pattern match
+   maps:merge(Pattern, Heap).
+
 
 %%%----------------------------------------------------------------------------
 %%%
