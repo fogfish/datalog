@@ -18,14 +18,15 @@
 -module(datalog_list).
 
 -export([
-   stream/1
+   sigma/1
 ]).
 
-%%
-%%
--spec stream( datalog:pattern() ) -> datalog:heap().
 
-stream(Expr) ->
+%%
+%% sigma function, returns `datalog:pattern()` evaluator for lists
+-spec sigma( datalog:pattern() ) -> datalog:heap().
+
+sigma(Expr) ->
    fun(Heap) ->
       fun(X) ->
          stream(X, Heap, Expr)

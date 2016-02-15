@@ -96,7 +96,7 @@ q(X, Expr) ->
 -spec(list/1 :: (pattern()) -> eval()).
 
 list(Pattern) ->
-   datalog_list:stream(Pattern).
+   datalog_list:sigma(Pattern).
 
 
 %%%----------------------------------------------------------------------------
