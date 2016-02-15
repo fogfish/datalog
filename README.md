@@ -37,6 +37,9 @@ The type of σ function is defined as following. The `datalog:pattern()` and `da
 -spec sigma( datalog:pattern() ) -> fun( (datalog:heap()) -> fun( (_) -> datum:stream() ) ).
 ```
 
+The library uses `map()` as data structure for tuples. It allows efficiently bind deducted values to head variabl. Thus, each sigma function return stream (lazy list) of maps.
+
+
 
 ## datalog expression
 

@@ -21,7 +21,6 @@
    sigma/1
 ]).
 
-
 %%
 %% sigma function, returns `datalog:pattern()` evaluator for lists
 -spec sigma( datalog:pattern() ) -> datalog:heap().
@@ -34,16 +33,26 @@ sigma(Expr) ->
    end.
 
 stream(X, Heap, #{'_' := Head} = Expr) ->
-   Nary = length(Head),
+   %
+   % output stream contains tuples with named values corresponding 
+   % to head definition. The head function normalize stream of 
+   % matched tuples and bind variables to values extracted from ground fact.
    head(Head,
+      %
+      %
+      %
       match(Head, datalog:bind(Heap, Expr), 
-         list(Nary, X)
+         %  
+         % the arity of head element define super set of tuples that 
+         % are matching the pattern. Let's build a stream of tuples 
+         % from list that satisfy given arity.
+         build(length(Head), X)
       )
    ).
 
 %%
-%% 
-list(Nary, List) ->
+%% build stream of tuples from list
+build(Nary, List) ->
    stream:filter(
       fun(X) -> 
          is_tuple(X) andalso size(X) =:= Nary
@@ -53,19 +62,6 @@ list(Nary, List) ->
 
 %%
 %%
-head(Head, Stream) ->
-   stream:map(
-      fun(X) ->
-         maps:from_list( 
-            lists:filter(
-               fun({Key, _}) -> is_atom(Key) end,
-               lists:zip(Head, tuple_to_list(X))
-            )
-         )
-      end,
-      Stream
-   ).
-
 match(Head, Heap, Stream) ->
    match(1, Head, Heap, Stream).
 
@@ -111,3 +107,22 @@ check('>',  A, B) -> A >  B;
 check('>=', A, B) -> A >= B;
 check('<',  A, B) -> A  < B;
 check('=<', A, B) -> A =< B.
+
+
+%%
+%% normalize stream and bind head variable to ground fact value(s)
+head(Head, Stream) ->
+   stream:map(
+      fun(X) ->
+         % The library uses `map()` as data structure for tuples.
+         % It allows efficiently bind deducted values to head variable.
+         % Each sigma function return stream of maps.
+         maps:from_list( 
+            lists:filter(
+               fun({Key, _}) -> is_atom(Key) end,
+               lists:zip(Head, tuple_to_list(X))
+            )
+         )
+      end,
+      Stream
+   ).
