@@ -12,7 +12,7 @@ The logic program consists of finite set of rules and large volume of ground fac
    L0 :- L1, ..., Ln
 ```
 
-L0 is a rule head, it is a producer of new facts deducted by body expression. The body is a conjunction of statement, built-in functions and filters. Each `Li` consist of predicate symbol and terms such as `p(t1, ..., tk)`. A term is either a constant or a variable. The rules can be expressed using relational algebra. The head is a derived relation, deducted through the _logical program_ and ground facts. It is not explicitly persisted anywhere and corresponds the relation view (projection). The materialization of these view is the main task of this library. Body predicates refers either to derived relations or ground facts. Ground facts are physically stored in external memory -- the library assumes that each predicated corresponds to exactly one persistent relation such that each ground fact `p(t1, ..., tk)` is retrieved as a tuple `(t1, ..., tk)`. The predicates with common variables give rise to join. 
+`L0` is a rule head, it is a producer of new facts deducted by body expression. The body is a conjunction of statement, built-in functions and filters. Each `Li` consist of predicate symbol and terms such as `p(t1, ..., tk)`. A term is either a constant or a variable. The rules can be expressed using relational algebra. The head is a derived relation, deducted through the _logical program_ and ground facts. It is not explicitly persisted anywhere and corresponds the relation view (projection). The materialization of these view is the main task of this library. Body predicates refers either to derived relations or ground facts. Ground facts are physically stored in external memory -- the library assumes that each predicated corresponds to exactly one persistent relation such that each ground fact `p(t1, ..., tk)` is retrieved as a tuple `(t1, ..., tk)`. The predicates with common variables give rise to join. 
 
 
 The library uses a "functional" interpretation of predicates, any predicate is a function -- sigma expression. It associates some of its bound arguments to the remaining ones, returning the lazy set of tuples corresponding to materialized predicate. For example if p is binary predicate, its σ function is denoted as
@@ -21,7 +21,7 @@ The library uses a "functional" interpretation of predicates, any predicate is a
 σ(S) -> { y | x ∈ S ^ p(x, y) }
 ```
 
-The interpreter translate goals of rules into algebraic queries with an objective to access the minimum of ground facts needed in order to determine the answer. Rules are a compiled to composition of σ functions (sub-queries). They are recursively expanded and the evaluation of the current sub-query is postponed until the new sub-query has been completely solved. 
+The interpreter translate goals of rules into algebraic queries with an objective to access the minimum of ground facts needed in order to determine the answer. Rules are a compiled to composition of σ functions (sub-queries). They are recursively expanded and the evaluation of the current sub-query is postponed until the new sub-query has been completely solved, see [horn evaluator](src/datalog_horn.erl). 
 
 The define sigma expression formalism translates purely declarative semantic into operational semantic, i.e. specify of query must be executed. The lazy set ensures simplicity of one-tuple-at-a-time evaluation strategy while preserving efficiency of set-oriented methods used by high-level query languages. Sigma expression is the formalism to relate logic program to external storage (most common query languages, access methodologies, i/o interfaces).
 
@@ -38,9 +38,9 @@ The type of σ function is defined as following. The `datalog:pattern()` and `da
 ```
 
 
-## datalog
+## datalog expression
 
-The logical program is a collection of horn clauses. The library expresses a datalog query using map as base type, see [datalog.erl](src/datalog.erl). It is called _native format_
+The logical program is a collection of horn clauses. The library expresses a datalog query using map as container type, see [datalog.erl](src/datalog.erl). It is called _native format_
 
 ```
 -type q()       :: #{ name() => [head() | body()] }.
@@ -51,12 +51,11 @@ The logical program is a collection of horn clauses. The library expresses a dat
 -type match()   :: _ | [bif()].
 ```
 
-Each key/val pair is horn clause -- the key is unique name, the value is the head and the body of the horn clause. The head defines variables which are deducted by body expression and lifted to new fact (relation). The body is a conjunction of statement, built-in functions and filters. The statement contains the name of predicate and pattern used to match group facts. 
+Each key/val pair of the map is horn clause -- the key is unique name, the value is the head and the body of the horn clause. The head defines variables which are deducted by body expression and lifted to new fact (relation). The body is a conjunction of statement, built-in functions and filters. The statement contains the name of predicate and pattern used to match group facts. 
 
-E.g. query `h(X,Y) :- p(X,Y).` is parsed to map `#{h => [ [x,y], {p,#{'_' => [x,y]}} ] }`
+E.g. query `h(X,Y) :- p(X,Y).` is parsed to map `#{ h => [ [x,y], {p,#{'_' => [x,y]}} ] }`
 
-
-The library evaluate datalog in _native format_ using evaluator function. The evaluator function is composition of sigmas that lifts `datalog:pattern()` and `datalog:heap()`. It takes reference to external storage and returns lazy set of deducted facts.   
+The _native format_ of datalog query is compiled to evaluator function. The evaluator function takes reference to external storage and returns lazy set of deducted facts. The compiler performs composition of sigma function to expression that addresses the query goal. 
 
 ```
 fun( (_) -> datum:stream() ).
