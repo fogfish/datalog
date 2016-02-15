@@ -52,6 +52,7 @@ groups() ->
      ,{imdb,  [], [
          imdb_person_1
         ,imdb_person_2
+        ,imdb_actor_of
       ]}
    ].
 
@@ -74,6 +75,14 @@ end_per_suite(_Config) ->
 
 %%   
 %%
+init_per_group(basic, Config) ->
+   List = [{a,1}, {b,1}, {c,2}, {d,2}, {e,3}, {f,3}, {g,4}, {h,4}, {i,5}, {j,5}],
+   [{list, List} | Config];
+
+init_per_group(imdb, Config) ->
+   {ok, List} = file:consult(code:where_is_file("imdb.config")),
+   [{list, List} | Config];
+
 init_per_group(_, Config) ->
    Config.
 

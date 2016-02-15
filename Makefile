@@ -2,92 +2,63 @@
 ## @copyright  (c) 2012 - 2014 Dmitry Kolesnikov. All Rights Reserved
 ##
 ## @description
-##   Makefile to build and release Erlang applications using
-##   rebar, reltool, etc (see README for details)
+##   Makefile to build and release Erlang applications using standard development tools
 ##
-##   application version schema (based on semantic version)
-##   ${APP}-${VSN}+${GIT}.${ARCH}.${PLAT}
-##
-## @version 0.8.3
-.PHONY: test rel deps all pkg
+## @version 0.10.4
 
 #####################################################################
 ##
 ## application config
 ##
 #####################################################################
-ROOT  = `pwd`
 PREFIX ?= /usr/local
 APP ?= $(notdir $(CURDIR))
 ARCH?= $(shell uname -m)
 PLAT?= $(shell uname -s)
-HEAD?= $(shell git rev-parse --short HEAD)
-TAG  = ${HEAD}.${ARCH}.${PLAT}
+VSN ?= $(shell test -z "`git status --porcelain`" && git describe --tags --long | sed -e 's/-g[0-9a-f]*//' | sed -e 's/-0//' || echo "`git describe --abbrev=0 --tags`-SNAPSHOT")
+REL  = ${APP}-${VSN}
+PKG  = ${REL}+${ARCH}.${PLAT}
 TEST?= ${APP}
-S3   =
-GIT ?= 
-VMI  = 
+S3  ?=
+VMI ?= fogfish/erlang
 NET ?= lo0
-USER =
-PASS =
+IID ?= undefined
 
 ## root path to benchmark framework
 BB     = ../basho_bench
 SSHENV = /tmp/ssh-agent.conf
-ADDR   = $(shell ifconfig ${NET} | sed -En 's/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p')
-BRANCH = $(shell git symbolic-ref --short -q HEAD)
+COOKIE?= nocookie
 
 ## erlang flags (make run only)
+ROOT   = `pwd`
+ADDR   = $(shell ifconfig ${NET} | sed -En 's/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p')
 EFLAGS = \
 	-name ${APP}@${ADDR} \
-	-setcookie nocookie \
+	-setcookie ${COOKIE} \
 	-pa ${ROOT}/ebin \
-	-pa ${ROOT}/priv \
 	-pa ${ROOT}/deps/*/ebin \
 	-pa ${ROOT}/apps/*/ebin \
-	-pa rel/files \
+	-pa ${ROOT}/rel/files \
+	-pa ${ROOT}/priv \
 	-kernel inet_dist_listen_min 32100 \
 	-kernel inet_dist_listen_max 32199 \
 	+P 1000000 \
 	+K true +A 160 -sbt ts
 
-#####################################################################
-##
-## internal config
-##
-#####################################################################
-ifeq ($(wildcard rel/reltool.config),) 
-	REL =
-	VSN =
-	TAR =
-	PKG =
-else
-   IID  = $(shell cat rel/reltool.config | sed -n 's/{target_dir,.*\"\([^-]*\).*\"}./\1/p')
-	REL  = $(shell cat rel/reltool.config | sed -n 's/{target_dir,.*\"\(.*\)\"}./\1/p')
-	VSN  = $(shell echo ${REL} | sed -n 's/.*-\(.*\)/\1/p')
-ifeq (${VSN},)
-	VSN  = $(shell cat rel/reltool.config | sed -n 's/.*{rel,.*\".*\",.*\"\(.*\)\".*/\1/p')
-endif
-ifeq (${config},)
-	RFLAGS  =	
-	VARIANT =
-else
-	VARIANT = $(addprefix ., $(notdir $(basename ${config})))
-	RFLAGS  = target_dir=${REL}${VARIANT} overlay_vars=${ROOT}/${config}
-endif
-ifeq (${VSN},)
-	TAR = ${IID}${VARIANT}+${TAG}.tgz
-	PKG = ${IID}${VARIANT}+${TAG}.bundle
-else
-	TAR = ${IID}-${VSN}${VARIANT}+${TAG}.tgz
-	PKG = ${IID}-${VSN}${VARIANT}+${TAG}.bundle
-endif
-endif
-
 ## self-extracting bundle wrapper
-BUNDLE_INIT = PREFIX=${PREFIX}\nREL=${PREFIX}/${REL}${VARIANT}\nAPP=${APP}\nVSN=${VSN}\nLINE=\`grep -a -n 'BUNDLE:\x24' \x240\`\ntail -n +\x24(( \x24{LINE\x25\x25:*} + 1)) \x240 | gzip -vdc - | tar -C ${PREFIX} -xvf - > /dev/null\n
+BUNDLE_INIT = PREFIX=${PREFIX}\nREL=${PREFIX}/${REL}\nAPP=${APP}\nVSN=${VSN}\nLINE=`grep -a -n "BUNDLE:$$" $$0`\ntail -n +$$(( $${LINE%%%%:*} + 1)) $$0 | gzip -vdc - | tar -C ${PREFIX} -xvf - > /dev/null\n
 BUNDLE_FREE = exit\nBUNDLE:\n
-BUILDER = cd /tmp && git clone -b ${BRANCH} ${GIT}/${APP} && cd /tmp/${APP} && make && make rel && sleep 300
+BUILDER = FROM ${VMI}\nRUN mkdir ${APP}\nCOPY . ${APP}/\nRUN cd ${APP} && make && make rel\n
+CTRUN   = \
+	-module(test). \
+	-export([run/1]). \
+	run(Spec) -> \
+   	{ok, Test} = file:consult(Spec), \
+   	case lists:keyfind(node, 1, Test) of \
+      	false -> ct:run_test([{spec, Spec}]); \
+         true  -> ct_master:run(Spec) \
+   	end, \
+		erlang:halt().
 
 #####################################################################
 ##
@@ -103,83 +74,99 @@ deps:
 	@./rebar get-deps
 
 clean:
-	@./rebar clean ; \
-	rm -rf test.*-temp-data ; \
-	rm -rf tests ; \
-	rm -rf log ; \
-	rm -f  *.tgz ; \
-	rm -f  *.bundle
-
+	@./rebar clean ;\
+	rm -rf test.*-temp-data ;\
+	rm -rf tests ;\
+	rm -rf log ;\
+	rm -Rf rel/${APP}-* ;\
+	rm -f  *.tgz ;\
+	rm -f  *.bundle ;\
+	rm -f test/test.erl ;\
+	rm -f test/test.beam  
 
 distclean: clean 
 	@./rebar delete-deps
 
+##
+## execute unit test
 unit: all
 	@./rebar skip_deps=true eunit
 
-test:
+##
+## execute common test and terminate node
+test: test/test.beam
 	@mkdir -p /tmp/test/${APP} ;\
-	erl ${EFLAGS} -run datalog test test/${TEST}.config 
+	erl ${EFLAGS} -pa test/ -run test run test/${TEST}.config
 
+test/test.beam: test/test.erl
+	erlc -o test $<
+
+test/test.erl:
+	echo "${CTRUN}" > $@
+
+##
+##
 docs:
 	@./rebar skip_deps=true doc
 
 #####################################################################
 ##
-## release
+## release 
 ##
 #####################################################################
-ifneq (${REL},)
-
-rel: ${TAR}
+rel: ${PKG}.tgz
 
 ## assemble VM release
 ifeq (${PLAT},$(shell uname -s))
-${TAR}:
-	@./rebar generate ${RFLAGS} ;\
-	cd rel ;\
-	test -d ${REL}${VARIANT} && tar -zcf ${TAR} ${REL}${VARIANT}/ ;\
-	test -d ${REL}${VARIANT} && mv ${TAR} ../${TAR} ;\
-	cd - ;\
-	test -f ${TAR} && echo "==> tarball: ${TAR}"
-
+${PKG}.tgz:
+	@./rebar generate target_dir=${REL} ;\
+	test -d rel/${REL} && tar -C rel -zcf $@ ${REL} ;\
+	test -f $@ && echo "==> tarball: $@"
 else
-ifneq (${VMI},)
-${TAR}:
-	@echo "==> docker run ${VMI}" ;\
-	K=`test ${PASS} && cat  ${PASS}` ;\
-	A=`test ${USER} && echo "mkdir -p /root/.ssh && echo \"$$K\" > /root/.ssh/id_rsa && chmod 0700 /root/.ssh/id_rsa && echo -e \"Host *\n\tUser ${USER}\n\tStrictHostKeyChecking no\n\" > /root/.ssh/config &&"` ;\
-	I=`docker run -d -a stdout -a stderr ${VMI} /bin/sh -c "$$A ${BUILDER}"` ;\
-	(docker attach $$I &) ;\
-	docker cp $$I:/tmp/${APP}/${TAR} . 1> /dev/null 2>&1 ;\
-	while [ $$? -ne 0 ] ;\
-	do \
-   	sleep 10 ;\
-   	docker cp $$I:/tmp/${APP}/${TAR} . 1> /dev/null 2>&1 ;\
-	done ;\
-	docker kill $$I ;\
-	docker rm $$I
+${PKG}.tgz: .git/dockermake
+	@docker build --file=$< --force-rm=true	--tag=build/${APP}:latest . ;\
+	I=`docker create build/${APP}:latest` ;\
+	docker cp $$I:/${APP}/$@ $@ ;\
+	docker rm -f $$I ;\
+	docker rmi build/${APP}:latest ;\
+	rm $< ;\
+	test -f $@ && echo "==> tarball: $@"
 
-endif
+.git/dockermake:
+	@echo "${BUILDER}" > $@
 endif
 
-## package VM release to executable bundle
-pkg: rel/deploy.sh ${TAR}
-	@printf "${BUNDLE_INIT}"  > ${PKG} ; \
-	cat  rel/deploy.sh       >> ${PKG} ; \
-	printf  "${BUNDLE_FREE}" >> ${PKG} ; \
-	cat  ${TAR}              >> ${PKG} ; \
-	chmod ugo+x  ${PKG}                ; \
-	echo "==> bundle: ${PKG}"
+## build docker image
+docker: rel/files/Dockerfile
+	docker build \
+		--build-arg APP=${APP} \
+		--build-arg VSN=${VSN} \
+		-t ${IID}/${APP}:${VSN} -f $< .
+	docker tag -f ${IID}/${APP}:${VSN} ${IID}/${APP}:latest
+
+
+
+#####################################################################
+##
+## package / bundle
+##
+#####################################################################
+pkg: ${PKG}.tgz ${PKG}.bundle
+
+${PKG}.bundle: rel/deploy.sh
+	@printf '${BUNDLE_INIT}' > $@ ;\
+	cat $<  >> $@ ;\
+	printf  '${BUNDLE_FREE}' >> $@ ;\
+	cat  ${PKG}.tgz >> $@ ;\
+	chmod ugo+x $@ ;\
+	echo "==> bundle: $@"
 
 ## copy 'package' to s3
-## copy 'package' to s3
-s3: ${PKG}
-	aws s3 cp ${PKG} ${S3}/${APP}+${TAG}${VARIANT}.bundle
+s3: ${PKG}.bundle
+	aws s3 cp $< ${S3}/$<
 
-s3-latest: ${PKG}
-	aws s3 cp ${PKG} ${S3}/${APP}+latest${VARIANT}.bundle
-endif
+s3-latest: ${PKG}.bundle
+	aws s3 cp $< ${S3}/${APP}-latest${VARIANT}.bundle
 
 #####################################################################
 ##
@@ -191,7 +178,7 @@ ${SSHENV}:
 	@echo "==> ssh: config keys" ;\
 	ssh-agent -s > ${SSHENV}
 
-node: ${SSHENV}
+node: ${PKG}.bundle ${SSHENV}
 	@echo "==> deploy: ${host}" ;\
 	. ${SSHENV} ;\
 	k=`basename ${pass}` ;\
@@ -199,9 +186,8 @@ node: ${SSHENV}
 	if [ -z "$$l" ] ; then \
 		ssh-add ${pass} ;\
 	fi ;\
-	rsync -cav --rsh=ssh --progress ${PKG} ${host}:${PKG} ;\
-	ssh -t ${host} "sudo sh ./${PKG}"
-
+	rsync -cav --rsh=ssh --progress $< ${host}:$< ;\
+	ssh -t ${host} "sudo sh ./$<"
 endif
 
 #####################################################################
@@ -218,19 +204,17 @@ benchmark:
 	$(BB)/priv/summary.r -i tests/current ;\
 	open tests/current/summary.png
 
-ifneq (${REL},)
-start: 
-	@./rel/${REL}${VARIANT}/bin/${APP} start
+start: ${PKG}.tgz
+	@./rel/${REL}/bin/${APP} start
 
-stop:
-	@./rel/${REL}${VARIANT}/bin/${APP} stop
+stop: ${PKG}.tgz
+	@./rel/${REL}/bin/${APP} stop
 
-console: 
-	@./rel/${REL}${VARIANT}/bin/${APP} console
+console: ${PKG}.tgz
+	@./rel/${REL}/bin/${APP} console
 
-attach:
-	@./rel/${REL}${VARIANT}/bin/${APP} attach
-endif
+attach: ${PKG}.tgz
+	@./rel/${REL}/bin/${APP} attach
 
 #####################################################################
 ##
@@ -240,3 +224,6 @@ endif
 rebar:
 	@curl -L -O https://github.com/rebar/rebar/wiki/rebar ; \
 	chmod ugo+x rebar
+
+.PHONY: test rel deps all pkg 
+

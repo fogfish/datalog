@@ -35,26 +35,49 @@
 -export([
    p/1,
    c/1,
-   c/2,
-   test/1
+   c/2
 ]).
+-export_type([q/0, eval/0, heap/0, pattern/0]).
 
-%%
-%% data types
--type(head()    :: [atom()]).
--type(pattern() :: #{'_' => head()}).
+%%%----------------------------------------------------------------------------
+%%%
+%%% data types
+%%%
+%%%----------------------------------------------------------------------------
+
+%% datalog query is a set of horn clauses
+-type q()       :: #{ name() => [head() | body()] }.
+-type head()    :: [atom()].
+-type body()    :: [{name(), pattern()}].
+-type name()    :: atom().
+
+%% pattern is unit of work to access ground facts persisted in external storage. 
+%% sigma function uses pattern as abstract sub-query definition towards the storage 
+-type pattern() :: #{'_' => head(), _ => match()}.
+-type match()   :: _ | [bif()].
+-type bif()     :: {'>' | '<' | '>=' | '=<' | '=/=', _}.
+
+%% sigma function
+-type eval()    :: fun( (_) -> datum:stream() ).
+-type heap()    :: fun( (#{}) -> eval() ).
+
+%%%----------------------------------------------------------------------------
+%%%
+%%% datalog primitives
+%%%
+%%%----------------------------------------------------------------------------
 
 %%
 %% build horn clause evaluator
--spec(horn/2 :: (head(), [any()]) -> any()).
+-spec horn(head(), [any()]) -> heap().
 
 horn(Head, List) ->
    datalog_horn:stream(Head, List).
 
 %%
 %% build datalog query evaluator
--spec(q/1 :: (any()) -> any()).
--spec(q/2 :: (any(), any()) -> datum:stream()).
+-spec q(heap()) -> eval().
+-spec q(_, heap()) -> eval().
 
 q(Expr) ->
    Expr(#{}).
@@ -70,7 +93,7 @@ q(X, Expr) ->
 
 %%
 %% build list evaluator using pattern-match specification
--spec(list/1 :: (pattern()) -> any()).
+-spec(list/1 :: (pattern()) -> eval()).
 
 list(Pattern) ->
    datalog_list:stream(Pattern).
@@ -83,14 +106,14 @@ list(Pattern) ->
 %%%----------------------------------------------------------------------------
 
 %%
-%% parse datalog
--spec(p/1 :: (string()) -> any()).
+%% parse datalog to native format
+-spec p(string()) -> datalog:q().
 
 p(Datalog) ->
    try
       {ok, Lex, _} = datalog_leex:string(Datalog), 
       {ok, Req}    = datalog_yeec:parse(Lex),
-      datalog(Req)
+      datalog_q:native(Req)
    catch
    _:{badmatch, {error, {_, rds_parser, Reason}}} ->
       {error, Reason}; 
@@ -101,8 +124,8 @@ p(Datalog) ->
    end. 
 
 %%
-%% compile datalog
--spec(c/1 :: (any()) -> any()).
+%% compile datalog to evaluator function
+-spec c(q()) -> eval().
 
 c(Datalog) ->
    c(datalog, Datalog).
@@ -114,56 +137,4 @@ c(Mod, Datalog) ->
          [Mod:Fun(Pat) || {Fun, Pat} <- Horn] %% TODO: check if Fun implemented by Mod
       )
    ).
-
-%%
-%% helper function to kick unit test
-test(Spec) ->
-   ct:run_test([{spec, Spec}]).
-
-
-%%%----------------------------------------------------------------------------
-%%%
-%%% private
-%%%
-%%%----------------------------------------------------------------------------
-
-%%
-%% convert list of horn clauses to datalog map
-datalog(Horns) ->
-   lists:foldl(
-      fun({Horn, Head, Body}, Acc) ->
-         {Pattern, Filter} = lists:partition(fun(X) -> size(X) =:= 2 end, Body),
-         maps:put(Horn, [Head | hornx(Pattern, Filter)], Acc)
-      end,
-      #{},
-      Horns 
-   ).
-
-hornx(Pattern, Filter) ->
-   [pattern(X, Filter) || X <- Pattern].
-
-pattern({Id, Pattern}, Filter) ->
-   Spec = lists:foldl(
-      fun(X, Acc) -> 
-         filter(X, Filter, Acc) 
-      end, 
-      #{'_' => Pattern},
-      Pattern
-   ),
-   {Id, Spec}.
-
-filter(I, Filter, Acc) ->
-   case 
-      lists:filter(fun(X) -> erlang:element(2, X) =:= I end, Filter)
-   of
-      [] -> 
-         Acc;
-      Fs ->
-         case lists:keyfind('=:=', 1, Fs) of
-            false ->
-               maps:put(I, [{P, F} || {P, _, F} <- Fs], Acc);
-            {'=:=', _, F} ->
-               maps:put(I, F, Acc)
-         end
-   end.
 

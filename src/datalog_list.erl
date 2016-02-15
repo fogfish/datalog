@@ -23,7 +23,7 @@
 
 %%
 %%
--spec stream( datalog:pattern() ) -> fun( (datalog:heap()) -> fun( (_) -> datum:stream() ) ).
+-spec stream( datalog:pattern() ) -> datalog:heap().
 
 stream(Expr) ->
    fun(Heap) ->

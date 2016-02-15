@@ -29,7 +29,7 @@ The define sigma expression formalism translates purely declarative semantic int
 
 ## σ function
 
-The sigma function is the formalism to relate logic program to ground facts persisted by external storage. The datalog library uses sigma algebra to evaluate logic program but it requires developers to implement corresponding sigma(s) (access protocols) supported by external storage. This is an abstraction interface to retrieve ground facts _matching_ predicate. The library hides the concerns of logical program evaluation but requires developers to implement access protocols. The library provides a naive reference implementation of Erlang lists (see `datalog_list`).  
+The sigma function is the formalism to relate logic program to ground facts persisted by external storage. The datalog library uses sigma algebra to evaluate logic program but it requires developers to implement corresponding sigma(s) (access protocols) supported by external storage. This is an abstraction interface to retrieve ground facts _matching_ predicate. The library hides the concerns of logical program evaluation but provides hooks to implement access protocols. The library uses a naive reference implementation of Erlang lists (see `datalog_list`).  
 
 The type of σ function is defined as following. The `datalog:pattern()` and `datalog:heap()` carries the values of bound arguments so that sigma function return all tuples matching the pattern.
 
@@ -38,9 +38,37 @@ The type of σ function is defined as following. The `datalog:pattern()` and `da
 ```
 
 
+## datalog
+
+The logical program is a collection of horn clauses. The library expresses a datalog query using map as base type, see [datalog.erl](src/datalog.erl). It is called _native format_
+
+```
+-type q()       :: #{ name() => [head() | body()] }.
+-type head()    :: [atom()].
+-type body()    :: [{name(), pattern()}].
+-type name()    :: atom().
+-type pattern() :: #{'_' => head(), _ => match()}.
+-type match()   :: _ | [bif()].
+```
+
+Each key/val pair is horn clause -- the key is unique name, the value is the head and the body of the horn clause. The head defines variables which are deducted by body expression and lifted to new fact (relation). The body is a conjunction of statement, built-in functions and filters. The statement contains the name of predicate and pattern used to match group facts. 
+
+E.g. query `h(X,Y) :- p(X,Y).` is parsed to map `#{h => [ [x,y], {p,#{'_' => [x,y]}} ] }`
 
 
+The library evaluate datalog in _native format_ using evaluator function. The evaluator function is composition of sigmas that lifts `datalog:pattern()` and `datalog:heap()`. It takes reference to external storage and returns lazy set of deducted facts.   
 
+```
+fun( (_) -> datum:stream() ).
+```
+
+The typical usage scenario **parse**, **compile** and **evaluate**.
+
+```
+Q = datalog:p("h(X,Y) :- list(X,Y), Y > 2.").
+E = datalog:c(Q).
+E([{a, 1}, {b, 2}, {c, 3}]).
+```
 
 
 ## Reference
