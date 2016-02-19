@@ -34,21 +34,22 @@ sigma(Expr) ->
 
 stream(X, Heap, #{'_' := Head} = Expr) ->
    %
-   % output stream contains tuples with named values corresponding 
+   % 3. output stream contains tuples with named values corresponding 
    % to head definition. The head function normalize stream of 
    % matched tuples and bind variables to values extracted from ground fact.
    head(Head,
       %
-      %
-      %
+      % 2. let's filter stream of tuples to match the pattern.
+      % The pattern is already re-written, all bound variables are defined 
       match(Head, datalog:bind(Heap, Expr), 
          %  
-         % the arity of head element define super set of tuples that 
+         % 1. the arity of head element define super set of tuples that 
          % are matching the pattern. Let's build a stream of tuples 
          % from list that satisfy given arity.
          build(length(Head), X)
       )
    ).
+
 
 %%
 %% build stream of tuples from list
@@ -61,7 +62,7 @@ build(Nary, List) ->
    ).
 
 %%
-%%
+%% build a stream filter for each bound variable or guard
 match(Head, Heap, Stream) ->
    match(1, Head, Heap, Stream).
 
