@@ -52,7 +52,6 @@ groups() ->
      ,{imdb,  [], [
          imdb_person_1
         ,imdb_person_2
-        ,imdb_actor_of
       ]}
    ].
 
@@ -98,31 +97,22 @@ end_per_group(_, _Config) ->
 %%%----------------------------------------------------------------------------   
 
 basic_all(_) ->
-   {all, [x,y], 
-      [
-         {all, [x,y], [ {like, [x,y]} ]}
+   #{
+      all := [[x,y], 
+         {like, #{'_' := [x,y]}}
       ]
-   } = datalog:p("
-      ?- all(X,Y).
-      all(X,Y) :- like(X,Y).
-   ").
+   } = datalog:p("all(X,Y) :- like(X,Y).").
 
 imdb_person_1(_) ->
-   {id, [x,name, <<"Ridley Scott">>],
-      [
-         {id, [x,y,z], [ {like, [x,y,z]} ]}
+   #{
+      id := [[x,name, <<"Ridley Scott">>],
+         {like, #{'_' := [x,y,z]}}
       ]
-   } = datalog:p("
-      ?- id(X,name,\"Ridley Scott\").
-      id(X,Y,Z) :- like(X,Y,Z).
-   ").
+   } = datalog:p("id(X,name,\"Ridley Scott\") :- like(X,Y,Z).").
 
 imdb_person_2(_) ->
-   {id, [x,<<"Ridley Scott">>],
-      [
-         {id, [x,z], [ {like, [x,name,z]} ]}
+   #{
+      id := [[x,<<"Ridley Scott">>],
+         {like, #{'_' := [x,name,z]}}
       ]
-   } = datalog:p("
-      ?- id(X,\"Ridley Scott\").
-      id(X,Z) :- like(X,name,Z).
-   ").
+   } = datalog:p("id(X,\"Ridley Scott\") :- like(X,name,Z).").
