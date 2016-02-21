@@ -16,13 +16,13 @@
 %% @doc
 %%   datalog
 
-Nonterminals   DATALOG CLAUSES HORN BODY ITEM GUARD TERMS.
-Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' '_' lit var symbol.
+Nonterminals   CLAUSES HORN BODY ITEM GUARD TERMS.
+Terminals      ':-' '(' ')' '.' ',' '<' '=' '>' '!' '_' lit var symbol.
 Rootsymbol     CLAUSES.
 
 
-DATALOG -> '?-' symbol '(' TERMS ')' '.' CLAUSES :
-   {unwrap('$2'), '$4', '$7'}.
+%% DATALOG -> '?-' symbol '(' TERMS ')' '.' CLAUSES :
+%%   {unwrap('$2'), '$4', '$7'}.
 
 CLAUSES -> HORN CLAUSES :
    ['$1' | '$2'].

@@ -2,7 +2,7 @@
 
 The library implements an ad-hoc query engine using simplified version of general _logic programming_ paradigm. It is designed for applications that uses a large number of ground facts persisted in external storage. 
 
-
+[![Build Status](https://secure.travis-ci.org/fogfish/datalog.svg?branch=master)](http://travis-ci.org/fogfish/datalog)
 
 ## background
 
