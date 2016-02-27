@@ -29,6 +29,7 @@
 ]).
 -export([
    basic_all/1
+  ,jsonld_support/1
   ,imdb_person_1/1
   ,imdb_person_2/1
 ]).
@@ -47,7 +48,8 @@ all() ->
 groups() ->
    [
       {basic, [], [
-         basic_all
+         basic_all,
+         jsonld_support
       ]}
      ,{imdb,  [], [
          imdb_person_1
@@ -116,3 +118,18 @@ imdb_person_2(_) ->
          {like, #{'_' := [x,name,z]}}
       ]
    } = datalog:p("id(X,\"Ridley Scott\") :- like(X,name,Z).").
+
+jsonld_support(_) ->
+   #{
+      id := [['@id', '@type'],
+         {like, #{'_' := ['@id',name,'@type']}}
+      ]
+   } = datalog:p("id(@id, @type) :- like(@id,name,@type).").
+   
+urn_support(_) ->
+   #{
+      id := [[x,y],
+         {'urn:type:like', #{'_' := [x,'urn:type:name',y]}}
+      ]
+   } = datalog:p("id(X, Y) :- urn:type:like(X,urn:type:name,Y).").
+   

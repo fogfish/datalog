@@ -17,8 +17,8 @@
 %%   datalog
 Definitions.
 
-LC    = [a-z_@]
-UC    = [A-Z_@]
+LC    = [a-z_@:]
+UC    = [A-Z_@:]
 DIGIT = [0-9]
 WS    = ([\000-\s]|%.*)
 
