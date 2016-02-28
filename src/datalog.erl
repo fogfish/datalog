@@ -147,16 +147,16 @@ c(Mod, Datalog) ->
    [Head | Horn] = hd(maps:values(Datalog)),
    datalog:q(
       datalog:horn(Head,
-         [sigma(Mod, Fun, Pat) || {Fun, Pat} <- Horn] %% TODO: check if Fun implemented by Mod
+         [sigma(Mod, Pat) || Pat <- Horn] %% TODO: check if Fun implemented by Mod
       )
    ).
 
-sigma(Mod, Fun, Pat) ->
+sigma(Mod, #{'@' := Fun} = Pat) ->
    case
       lists:keyfind(Fun, 1, Mod:module_info(exports))
    of
       {Fun, 1} ->
          Mod:Fun(Pat);
       _        ->
-         Mod:sigma(Fun, Pat)
+         Mod:sigma(Pat)
    end.
