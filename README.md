@@ -89,7 +89,7 @@ E([{a, 1}, {b, 2}, {c, 3}]).
 ## Reference
 
 1. [What You Always Wanted to Know About Datalog (And Never Dared to Ask)](http://www.csd.uoc.gr/~hy562/1112_spring/instr_material/WhatYouAlwaysWantedtoKnowAboutDatalog_AndNeverDaredtoAsk.pdf)
-
+1. [Theory of Relational Databases](http://www.cs.nott.ac.uk/~psznza/G53RDB07/rdb14.pdf)
 
 
 
