@@ -54,7 +54,7 @@
 
 %% pattern is unit of work to access ground facts persisted in external storage. 
 %% sigma function uses pattern as abstract sub-query definition towards the storage 
--type pattern() :: #{'_' => head(), _ => match()}.
+-type pattern() :: #{'@' => name(), '_' => head(), _ => match()}.
 -type match()   :: _ | [bif()].
 -type bif()     :: {'>' | '<' | '>=' | '=<' | '=/=', _}.
 

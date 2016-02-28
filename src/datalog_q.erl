@@ -45,16 +45,13 @@ ast_to_body(Pattern, Filter) ->
 %%
 %%
 ast_to_pattern({Id, Pattern}, Filter) ->
-   {Id, ast_to_pattern1(Pattern, Filter)}.
-
-ast_to_pattern1(Pattern, Filter) ->
    %% check each pattern variable for BIF constrains 
    lists:foldl(
       fun(X, Acc) -> ast_to_filter(X, Filter, Acc) end, 
-      #{'_' => Pattern},
+      #{'@' => Id, '_' => Pattern},
       Pattern
    ).
-
+   
 %%
 %% interleave pattern variable with filters
 ast_to_filter(Variable, Filter, Pattern) ->

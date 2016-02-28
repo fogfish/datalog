@@ -101,35 +101,35 @@ end_per_group(_, _Config) ->
 basic_all(_) ->
    #{
       all := [[x,y], 
-         {like, #{'_' := [x,y]}}
+         #{'@' := like, '_' := [x,y]}
       ]
    } = datalog:p("all(X,Y) :- like(X,Y).").
 
 imdb_person_1(_) ->
    #{
       id := [[x,name, <<"Ridley Scott">>],
-         {like, #{'_' := [x,y,z]}}
+         #{'@' := like, '_' := [x,y,z]}
       ]
    } = datalog:p("id(X,name,\"Ridley Scott\") :- like(X,Y,Z).").
 
 imdb_person_2(_) ->
    #{
       id := [[x,<<"Ridley Scott">>],
-         {like, #{'_' := [x,name,z]}}
+         #{'@' := like, '_' := [x,name,z]}
       ]
    } = datalog:p("id(X,\"Ridley Scott\") :- like(X,name,Z).").
 
 jsonld_support(_) ->
    #{
       id := [['@id', '@type'],
-         {like, #{'_' := ['@id',name,'@type']}}
+         #{'@' := like, '_' := ['@id',name,'@type']}
       ]
    } = datalog:p("id(@id, @type) :- like(@id,name,@type).").
    
 urn_support(_) ->
    #{
       id := [[x,y],
-         {'urn:type:like', #{'_' := [x,'urn:type:name',y]}}
+         #{'@' := 'urn:type:like',  '_' := [x,'urn:type:name',y]}
       ]
    } = datalog:p("id(X, Y) :- urn:type:like(X,urn:type:name,Y).").
    
