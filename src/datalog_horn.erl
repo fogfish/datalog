@@ -38,7 +38,7 @@ stream(X, Heap0, Horn0) ->
    try
       {Heap1, Horn1} = eval(X, Heap0, Horn0),
       stream:new(Heap1, fun() -> stream(X, Heap1, Horn1) end)
-   catch _:_ ->
+   catch _:eos ->
       stream:new()
    end.
 
