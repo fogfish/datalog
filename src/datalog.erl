@@ -124,7 +124,9 @@ streamwith(Fun, X, Pattern)
       #{X := Filter} when is_list(Filter) ->
          streamwith(Fun, Filter);
       #{X := Value} ->
-         streamwith(Fun, [{'=:=', Value}])
+         streamwith(Fun, [{'=:=', Value}]);
+      _ ->
+         fun(_, Stream) -> Stream end
    end;
 
 streamwith(Fun, Value, _) ->
