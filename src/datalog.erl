@@ -26,7 +26,9 @@
    horn/2, 
    q/1, 
    q/2,
-   bind/2
+   bind/2,
+   filter/2,
+   takewhile/2
 ]).
 %% build-in data types
 -export([
@@ -86,6 +88,12 @@ q(Expr) ->
 q(X, Expr) ->
    Expr(X).
 
+%%%----------------------------------------------------------------------------
+%%%
+%%% sigma function helpers
+%%%
+%%%----------------------------------------------------------------------------
+
 %%
 %% bind sigma pattern with resolved variable (resolved previously by sigma)  
 -spec bind(map(), pattern()) -> pattern().
@@ -97,6 +105,45 @@ bind(Heap, Pattern) ->
    % Thus any BIF are converted to pattern match
    maps:merge(Pattern, Heap).
 
+%%
+%% build a in-line stream filter(s)
+-spec filter(_, pattern()) -> fun( (_, datum:stream()) -> datum:stream() ).
+-spec takewhile(_, pattern()) -> fun( (_, datum:stream()) -> datum:stream() ).
+
+filter(X, Pattern) ->
+   streamwith(fun stream:filter/2, X, Pattern).
+
+takewhile(X, Pattern) ->
+   streamwith(fun stream:takewhile/2, X, Pattern).
+
+%%
+streamwith(Fun, X, Pattern)
+ when is_atom(X) ->
+   %% guard term p(..., X, ...), X > 5
+   case Pattern of
+      #{X := Filter} when is_list(Filter) ->
+         streamwith(Fun, Filter);
+      #{X := Value} ->
+         streamwith(Fun, [{'=:=', Value}])
+   end;
+
+streamwith(Fun, Value, _) ->
+   %% in-line term p(..., 5, ...)
+   streamwith(Fun, [{'=:=', Value}]).
+
+streamwith(Fun, Filters) ->
+   fun(Lens, Stream) ->
+      lists:foldl(fun(Filter, Acc) -> filter(Fun, Filter, Lens, Acc) end, Stream, Filters)
+   end.
+
+filter(Fun, {F, Val}, Lens, Stream) ->
+   Fun(fun(X) -> check(F, Lens(X), Val) end, Stream).
+
+check('>',   A, B) -> A >  B;
+check('>=',  A, B) -> A >= B;
+check('<',   A, B) -> A  < B;
+check('=<',  A, B) -> A =< B;
+check('=:=', A, B) -> A =:= B.
 
 %%%----------------------------------------------------------------------------
 %%%
