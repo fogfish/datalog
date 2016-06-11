@@ -24,8 +24,8 @@
 %% evaluator interface
 -export([
    horn/2, 
-   q/1, 
-   q/2,
+   q/2, 
+   q/3,
    bind/2,
    filter/2,
    takewhile/2
@@ -79,14 +79,16 @@ horn(Head, List) ->
 
 %%
 %% build datalog query evaluator
--spec q(heap()) -> eval().
--spec q(_, heap()) -> eval().
+-spec q(_, _) -> eval().
+-spec q(_, _, _) -> eval().
 
-q(Expr) ->
-   Expr(#{}).
+q(Expr, X) ->
+   q(Expr, #{}, X).
 
-q(X, Expr) ->
-   Expr(X).
+q(Expr, Heap, X) ->
+   Eval = Expr(#{}),
+   Eval(X).
+
 
 %%%----------------------------------------------------------------------------
 %%%
@@ -186,18 +188,16 @@ p(Datalog) ->
    end. 
 
 %%
-%% compile datalog to evaluator function
--spec c(q()) -> eval().
+%% compile datalog to evaluator function 
+-spec c(q()) -> heap().
 
 c(Datalog) ->
    c(datalog, Datalog).
 
 c(Mod, Datalog) ->
    [Head | Horn] = hd(maps:values(Datalog)),
-   datalog:q(
-      datalog:horn(Head,
-         [sigma(Mod, Pat) || Pat <- Horn] %% TODO: check if Fun implemented by Mod
-      )
+   datalog:horn(Head,
+      [sigma(Mod, Pat) || Pat <- Horn] %% TODO: check if Fun implemented by Mod
    ).
 
 sigma(Mod, #{'@' := Fun} = Pat) ->

@@ -66,21 +66,27 @@ fun( (_) -> datum:stream() ).
 
 The typical usage scenario **parse**, **compile** and **evaluate**.
 
-```
+```erlang
+%% parse query
 Q = datalog:p("h(X,Y) :- list(X,Y), Y > 1.").
+
+%% compile query
 E = datalog:c(Q).
-E([{a, 1}, {b, 2}, {c, 3}]).
+
+%% evaluate query
+datalog:q(E, [{a, 1}, {b, 2}, {c, 3}]).
 ```
 
 The library allows to by-pass parsing and use direct interface to **declare** and **evaluate** query. In the following example, `datalog:horn` declares a horn clause that evaluates conjunction of statement; `datalog:list` declares a sigma function that translates a `datalog:pattern` into list pattern match primitives using notation of streams (lazy lists).
 
-```
-E = datalog:q(
-   datalog:horn([x,y], [
+```erlang
+%% define query using native format
+E = datalog:horn([x,y], [
       datalog:list(#{ '_' => [x, y], y => [{'>', 1}] })
-   ])
-).
-E([{a, 1}, {b, 2}, {c, 3}]).
+]).
+
+%% evaluate query
+datalog:q(E, [{a, 1}, {b, 2}, {c, 3}]).
 ```
 
 
