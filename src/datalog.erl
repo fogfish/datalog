@@ -86,7 +86,7 @@ q(Expr, X) ->
    q(Expr, #{}, X).
 
 q(Expr, Heap, X) ->
-   Eval = Expr(#{}),
+   Eval = Expr(Heap),
    Eval(X).
 
 
