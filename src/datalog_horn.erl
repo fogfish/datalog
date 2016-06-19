@@ -25,12 +25,21 @@
 stream(Head, Horn) ->
    fun(Heap) ->
       fun(X) ->
-         stream:map(
-            fun(Y) -> maps:with(Head, Y) end,
-            stream(X, Heap, lists:reverse(Horn))
+         unique(
+            stream:map(
+               fun(Y) -> maps:with(Head, Y) end,
+               stream(X, Heap, lists:reverse(Horn))
+            )
          )
       end
    end.
+
+%%
+%% remove duplicated elements
+unique({s, Head, _}=Stream) ->
+   stream:new(Head, fun() -> unique(stream:dropwhile(fun(X) -> X =:= Head end, Stream)) end);
+unique({}) ->
+   stream:new().
 
 %%
 %% apply horn clause to heap and context

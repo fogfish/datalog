@@ -102,18 +102,19 @@ end_per_group(_, _Config) ->
 %%
 %%
 basic_all(Config) ->
-   Eval  = datalog:q(
+   List = ?config(list, Config),
+   Eval = datalog:q(
       datalog:horn([x,y], [
          datalog:list(#{'_' => [x,y]})
-      ])
+      ]),
+      List
    ),
-   List = ?config(list, Config),
    List = stream:list( 
       stream:map(
          fun(#{x := X, y := Y}) ->
             {X, Y}
          end,
-         Eval(List)
+         Eval
       )
    ).
 
@@ -123,7 +124,8 @@ imdb_person_1(Config) ->
    Eval  = datalog:q(
       datalog:horn([a,b,c], [
          datalog:list(#{'_' => [a,b,c], b => name, c => <<"Ridley Scott">>})
-      ])
+      ]),
+      ?config(list, Config)
    ),
    [
       #{
@@ -131,38 +133,40 @@ imdb_person_1(Config) ->
          b := name, 
          c := <<"Ridley Scott">>
       }
-   ] = stream:list( Eval(?config(list, Config)) ).
+   ] = stream:list( Eval ).
 
 %%
 %%
 imdb_person_2(Config) ->
    Eval  = datalog:q(
-      #{c => <<"Ridley Scott">>},
       datalog:horn([a,c], [
          datalog:list(#{'_' => [a,b,c], b => name})
-      ])
+      ]),
+      #{c => <<"Ridley Scott">>},
+      ?config(list, Config)
    ),
    [
       #{
          a := <<"urn:person:137">>, 
          c := <<"Ridley Scott">>
       }
-   ] = stream:list( Eval(?config(list, Config)) ).
+   ] = stream:list( Eval ).
 
 
 %%
 %%
 imdb_actor_of(Config) ->
    Eval = datalog:q(
-      #{t => <<"Lethal Weapon">>},
       datalog:horn([n], [
          datalog:list(#{'_' => [m,x,t], x => title}),
          datalog:list(#{'_' => [m,y,p], y => cast}),
          datalog:list(#{'_' => [p,z,n], z => name})
-      ])
+      ]),
+      #{t => <<"Lethal Weapon">>},
+      ?config(list, Config)
    ),
    [
       #{n := <<"Mel Gibson">>},
       #{n := <<"Danny Glover">>},
       #{n := <<"Gary Busey">>}
-   ] = stream:list( Eval(?config(list, Config)) ).
+   ] = stream:list( Eval ).
