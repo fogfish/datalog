@@ -74,6 +74,9 @@
 %% build horn clause evaluator
 -spec horn(head(), [any()]) -> heap().
 
+horn({Id, Head}, List) ->
+   datalog_horn:stream(Id, Head, List);
+
 horn(Head, List) ->
    datalog_horn:stream(Head, List).
 
@@ -195,8 +198,8 @@ c(Datalog) ->
    c(datalog, Datalog).
 
 c(Mod, Datalog) ->
-   [Head | Horn] = hd(maps:values(Datalog)),
-   datalog:horn(Head,
+   {Id, [Head | Horn]} = hd(maps:to_list(Datalog)),
+   datalog:horn({Id, Head},
       [sigma(Mod, Pat) || Pat <- Horn] %% TODO: check if Fun implemented by Mod
    ).
 

@@ -19,6 +19,7 @@
 -include("datalog.hrl").
 
 -export([stream/2]).
+-export([stream/3]).
 
 %%
 %%
@@ -28,11 +29,24 @@ stream(Head, Horn) ->
          unique(
             stream:map(
                fun(Y) -> maps:with(Head, Y) end,
-               stream(X, Heap, lists:reverse(Horn))
+               stream1(X, Heap, lists:reverse(Horn))
             )
          )
       end
    end.
+
+stream(Id, Head, Horn) ->
+   fun(Heap) ->
+      fun(X) ->
+         unique(
+            stream:map(
+               fun(Y) -> (maps:with(Head, Y))#{'@type' => Id} end,
+               stream1(X, Heap, lists:reverse(Horn))
+            )
+         )
+      end
+   end.
+
 
 %%
 %% remove duplicated elements
@@ -43,10 +57,10 @@ unique({}) ->
 
 %%
 %% apply horn clause to heap and context
-stream(X, Heap0, Horn0) ->
+stream1(X, Heap0, Horn0) ->
    try
       {Heap1, Horn1} = eval(X, Heap0, Horn0),
-      stream:new(Heap1, fun() -> stream(X, Heap1, Horn1) end)
+      stream:new(Heap1, fun() -> stream1(X, Heap1, Horn1) end)
    catch _:eos ->
       stream:new()
    end.
