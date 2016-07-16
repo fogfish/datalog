@@ -160,7 +160,7 @@ check('=:=', A, B) -> A =:= B.
 
 %%
 %% build list evaluator using pattern-match specification
--spec(list/1 :: (pattern()) -> eval()).
+-spec list(pattern()) -> eval().
 
 list(Pattern) ->
    datalog_list:sigma(Pattern).
@@ -212,3 +212,4 @@ sigma(Mod, #{'@' := Fun} = Pat) ->
       _        ->
          Mod:sigma(Pat)
    end.
+
