@@ -9,7 +9,7 @@ The library implements an ad-hoc query engine using simplified version of genera
 The logic program consists of finite set of rules and large volume of ground facts -- knowledge. The rules are used to deduce new facts from other facts. The [Horn clauses](https://en.wikipedia.org/wiki/Horn_clause) formally defines rules (first-order formula)
 
 ```
-   L0 :- L1, ..., Ln
+L0 :- L1, ..., Ln
 ```
 
 `L0` is a rule head, it is a producer of new facts deducted by body expression. The body is a conjunction of statement, built-in functions and filters. Each `Li` consist of predicate symbol and terms such as `p(t1, ..., tk)`. A term is either a constant or a variable. The head is a derived relation, deducted through the _logical program_ and ground facts. It is not explicitly persisted anywhere and corresponds the relation view (projection). The materialization of these view is the main task of this library. Body predicates refers either to derived relations or ground facts. Ground facts are physically stored in external memory -- the library assumes that each predicated corresponds to exactly one persistent relation such that each ground fact `p(t1, ..., tk)` is retrieved as a tuple `(t1, ..., tk)`. The predicates with common variables give rise to join. 
@@ -56,7 +56,7 @@ The logical program is a collection of horn clauses. The library expresses a dat
 
 Each key/val pair of the map is horn clause -- the key is unique name, the value is the head and the body of the horn clause. The head defines variables which are deducted by body expression and lifted to new fact (relation). The body is a conjunction of statement, built-in functions and filters. The statement contains the name of predicate and pattern used to match group facts. 
 
-E.g. query `h(X,Y) :- p(X,Y).` is parsed to map `#{ h => [ [x,y], {p,#{'_' => [x,y]}} ] }`
+E.g. query `h(x,y) :- p(x,y).` is parsed to map `#{ h => [ [x,y], {p,#{'_' => [x,y]}} ] }`
 
 The _native format_ of datalog query is compiled to evaluator function. The evaluator function takes reference to external storage and returns lazy set of deducted facts. The compiler performs composition of sigma function to expression that addresses the query goal. 
 
@@ -68,7 +68,7 @@ The typical usage scenario **parse**, **compile** and **evaluate**.
 
 ```erlang
 %% parse query
-Q = datalog:p("h(X,Y) :- list(X,Y), Y > 1.").
+Q = datalog:p("h(x,y) :- list(x,y), y > 1.").
 
 %% compile query
 E = datalog:c(Q).
