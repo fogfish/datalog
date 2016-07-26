@@ -21,12 +21,16 @@
 -export([stream/2]).
 -export([stream/3]).
 
+%% scalable bloom filter config
+-define(SBF, sbf:new(128, 0.0001)).
+
 %%
 %%
 stream(Head, Horn) ->
    fun(Heap) ->
       fun(X) ->
          unique(
+            ?SBF,
             stream:map(
                fun(Y) -> maps:with(Head, Y) end,
                stream1(X, Heap, lists:reverse(Horn))
@@ -39,6 +43,7 @@ stream(Id, Head, Horn) ->
    fun(Heap) ->
       fun(X) ->
          unique(
+            ?SBF,
             stream:map(
                fun(Y) -> (maps:with(Head, Y))#{'@type' => Id} end,
                stream1(X, Heap, lists:reverse(Horn))
@@ -50,9 +55,14 @@ stream(Id, Head, Horn) ->
 
 %%
 %% remove duplicated elements
-unique({s, Head, _}=Stream) ->
-   stream:new(Head, fun() -> unique(stream:dropwhile(fun(X) -> X =:= Head end, Stream)) end);
-unique({}) ->
+unique(Sbf0, {s, Head, _}=Stream) ->
+   Sbf1 = sbf:add(Head, Sbf0),
+   stream:new(Head, 
+      fun() ->
+         unique(Sbf1, stream:dropwhile(fun(X) -> sbf:has(X, Sbf1) end, Stream))
+      end
+   );
+unique(_, {}) ->
    stream:new().
 
 %%
