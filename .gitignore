@@ -5,13 +5,10 @@
 *.dump
 *.tag.gz
 *.tgz
-ebin/
-deps/
-.eunit/
-.rebar/
+_build/
 tests/
-rebar
+rebar.lock
+rebar3
 *_leex.erl
 *_yeec.erl
 *.sublime-*
-test/test.erl

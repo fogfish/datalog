@@ -82,7 +82,7 @@ init_per_group(basic, Config) ->
    [{list, List} | Config];
 
 init_per_group(imdb, Config) ->
-   {ok, List} = file:consult(code:where_is_file("imdb.config")),
+   {ok, List} = file:consult(filename:join([code:priv_dir(datalog), "imdb.config"])),
    [{list, List} | Config];
 
 init_per_group(_, Config) ->

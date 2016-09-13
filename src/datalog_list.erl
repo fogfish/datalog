@@ -26,11 +26,12 @@
 -spec sigma( datalog:pattern() ) -> datalog:heap().
 
 sigma(Expr) ->
-   fun(Heap) ->
-      fun(X) ->
-         stream(X, Heap, Expr)
+   fun(X) ->
+      fun(Stream) ->
+         stream(X, stream:head(Stream), Expr)
       end
    end.
+
 
 stream(X, Heap, #{'_' := Head} = Expr) ->
    %

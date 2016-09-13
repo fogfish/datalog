@@ -28,7 +28,8 @@
    q/3,
    bind/2,
    filter/2,
-   takewhile/2
+   takewhile/2,
+   unique/1
 ]).
 %% build-in data types
 -export([
@@ -74,11 +75,13 @@
 %% build horn clause evaluator
 -spec horn(head(), [any()]) -> heap().
 
-horn({Id, Head}, List) ->
-   datalog_horn:stream(Id, Head, List);
+% horn({Id, Head}, List) ->
+%    datalog_horn:stream(Id, Head, List);
 
 horn(Head, List) ->
-   datalog_horn:stream(Head, List).
+   fun(X) ->
+      datalog_horn:stream(Head, [Fun(X) || Fun <- List])
+   end.
 
 %%
 %% build datalog query evaluator
@@ -86,18 +89,49 @@ horn(Head, List) ->
 -spec q(_, _, _) -> eval().
 
 q(Expr, X) ->
-   q(Expr, #{}, X).
+   ( Expr(X) )(stream:new(#{})).   
 
 q(Expr, Heap, X) ->
-   Eval = Expr(Heap),
-   Eval(X).
-
+   ( Expr(X) )(stream:new(Heap)).   
 
 %%%----------------------------------------------------------------------------
 %%%
 %%% sigma function helpers
 %%%
 %%%----------------------------------------------------------------------------
+
+%% scalable bloom filter config
+% -define(SBF, sbf:new(128, 0.0001)).
+
+%%
+%%
+unique(#{'_' := Head}) ->
+   fun(_) ->
+      fun(Stream) ->
+         {pipe, stream:unfold(fun unique1/1, {sbf:new(128, 0.0001), Head, Stream})}
+      end
+   end.
+
+unique1({_, _, {}}) ->
+   stream:new();  
+
+unique1({Sbf0, Head, Stream}) ->
+   Sbf1 = sbf:add(maps:with(Head, stream:head(Stream)), Sbf0),
+   Tail = stream:dropwhile(fun(X) -> sbf:has(maps:with(Head, X), Sbf1) end, Stream),
+   {stream:head(Stream), {Sbf1, Head, Tail}}.
+
+%%
+%% remove duplicated elements
+% unique(Sbf0, {s, Head, _}=Stream) ->
+%    Sbf1 = sbf:add(Head, Sbf0),
+%    stream:new(Head, 
+%       fun() ->
+%          unique(Sbf1, stream:dropwhile(fun(X) -> sbf:has(X, Sbf1) end, Stream))
+%       end
+%    );
+% unique(_, {}) ->
+%    stream:new().
+
 
 %%
 %% bind sigma pattern with resolved variable (resolved previously by sigma)  
