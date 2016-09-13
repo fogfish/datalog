@@ -29,7 +29,8 @@
    bind/2,
    filter/2,
    takewhile/2,
-   unique/1
+   unique/1,
+   put/1
 ]).
 %% build-in data types
 -export([
@@ -101,11 +102,22 @@ q(Expr, Heap, X) ->
 
 %%
 %% a predicate ensures unique terms within the stream
+%% ```
+%% h(x,z) :- a(x,y), b(y,z), :unique(x,z). 
+%% ``` 
 -spec unique(predicate()) -> _.
 
 unique(X) -> datalog_lang:unique(X).  
 
+%%
+%% a predicate put lens (assign value to stream tuple). 
+%% it either assign a variable or literal value defined by predicate.
+%% ```
+%% h(x,z) :- a(x,y), :put(z,y). 
+%% ```  
+-spec put(predicate()) -> _.
 
+put(X) -> datalog_lang:put(X).
 
 
 
