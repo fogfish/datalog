@@ -50,18 +50,20 @@
 %%%----------------------------------------------------------------------------
 
 %% datalog query is a set of horn clauses
--type q()       :: #{ name() => [head() | body()] }.
--type head()    :: [atom()].
--type body()    :: [{name(), pattern()}].
--type name()    :: atom().
+-type q()         :: #{horn() => [head() | body()]}.
+-type head()      :: [atom()].
+-type body()      :: [predicate()].
+-type horn()      :: atom().
 
 %% pattern is unit of work to access ground facts persisted in external storage. 
 %% sigma function uses pattern as abstract sub-query definition towards the storage 
--type pattern() :: #{'@' => name(), '_' => head(), _ => match()}.
--type match()   :: _ | [bif()].
--type bif()     :: {'>' | '<' | '>=' | '=<' | '=/=', _}.
+-type predicate() :: #{'@' => name(), '_' => head(), _ => pattern()}.
+-type name()      :: f() | {module(), f()}.
+-type pattern()   :: _ | [guard()].
+-type guard()     :: {'>' | '<' | '>=' | '=<' | '=/=', _}.
+-type f()         :: atom().
 
-%% sigma function
+%% sigma function (@todo: define types)
 -type eval()    :: fun( (_) -> datum:stream() ).
 -type heap()    :: fun( (map()) -> eval() ).
 
@@ -73,14 +75,11 @@
 
 %%
 %% build horn clause evaluator
--spec horn(head(), [any()]) -> heap().
+-spec horn(head(), body()) -> heap().
 
-% horn({Id, Head}, List) ->
-%    datalog_horn:stream(Id, Head, List);
-
-horn(Head, List) ->
+horn(Head, Body) ->
    fun(X) ->
-      datalog_horn:stream(Head, [Fun(X) || Fun <- List])
+      datalog_horn:stream(Head, [Fun(X) || Fun <- Body])
    end.
 
 %%
@@ -225,20 +224,26 @@ p(Datalog) ->
    end. 
 
 %%
-%% compile datalog to evaluator function 
+%% compile native datalog to evaluator function 
 -spec c(q()) -> heap().
 
 c(Datalog) ->
    c(datalog, Datalog).
 
 c(Mod, Datalog) ->
-   {Id, [Head | Horn]} = hd(maps:to_list(Datalog)),
-   datalog:horn({Id, Head},
-      [sigma(Mod, Pat) || Pat <- Horn] %% TODO: check if Fun implemented by Mod
+   {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
+   datalog:horn(Head,
+      [cc(Mod, Pat) || Pat <- Body]
    ).
 
-sigma(Mod, #{'@' := Fun} = Pat) ->
-   case
+cc(_, #{'@' := {Mod, Fun}} = Pat) ->
+   cc_eval(Mod, Fun, Pat);
+
+cc(Mod, #{'@' := Fun} = Pat) ->
+   cc_eval(Mod, Fun, Pat).
+
+cc_eval(Mod, Fun, Pat) ->
+   case 
       lists:keyfind(Fun, 1, Mod:module_info(exports))
    of
       {Fun, 1} ->
