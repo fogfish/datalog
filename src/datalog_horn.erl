@@ -73,7 +73,7 @@ stream(Head, Horn) ->
          lists:foldl(
             fun(H, Acc) ->
                case H(Acc) of
-                  {pipe, Eg} ->
+                  [pipe|Eg] ->
                      Eg;
                   Eg ->
                      stream:unfold(fun unfold/1, {Eg, H, stream:head(Acc), stream:tail(Acc)})

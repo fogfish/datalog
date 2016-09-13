@@ -41,7 +41,7 @@
    c/1,
    c/2
 ]).
--export_type([q/0, eval/0, heap/0, pattern/0]).
+-export_type([q/0, eval/0, heap/0, predicate/0]).
 
 %%%----------------------------------------------------------------------------
 %%%
@@ -95,41 +95,18 @@ q(Expr, Heap, X) ->
 
 %%%----------------------------------------------------------------------------
 %%%
-%%% sigma function helpers
+%%% build-in predicates
 %%%
 %%%----------------------------------------------------------------------------
 
-%% scalable bloom filter config
-% -define(SBF, sbf:new(128, 0.0001)).
-
 %%
-%%
-unique(#{'_' := Head}) ->
-   fun(_) ->
-      fun(Stream) ->
-         {pipe, stream:unfold(fun unique1/1, {sbf:new(128, 0.0001), Head, Stream})}
-      end
-   end.
+%% a predicate ensures unique terms within the stream
+-spec unique(predicate()) -> _.
 
-unique1({_, _, {}}) ->
-   stream:new();  
+unique(X) -> datalog_lang:unique(X).  
 
-unique1({Sbf0, Head, Stream}) ->
-   Sbf1 = sbf:add(maps:with(Head, stream:head(Stream)), Sbf0),
-   Tail = stream:dropwhile(fun(X) -> sbf:has(maps:with(Head, X), Sbf1) end, Stream),
-   {stream:head(Stream), {Sbf1, Head, Tail}}.
 
-%%
-%% remove duplicated elements
-% unique(Sbf0, {s, Head, _}=Stream) ->
-%    Sbf1 = sbf:add(Head, Sbf0),
-%    stream:new(Head, 
-%       fun() ->
-%          unique(Sbf1, stream:dropwhile(fun(X) -> sbf:has(X, Sbf1) end, Stream))
-%       end
-%    );
-% unique(_, {}) ->
-%    stream:new().
+
 
 
 %%
