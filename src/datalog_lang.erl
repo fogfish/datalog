@@ -18,8 +18,7 @@
 -module(datalog_lang).
 
 -export([
-   unique/1,
-   put/1
+   unique/1
 ]).
 
 %%
@@ -47,22 +46,4 @@ uniq({Sbf0, Head, Stream}) ->
    Tail = stream:dropwhile(fun(X) -> sbf:has(maps:with(Head, X), Sbf1) end, Stream),
    {stream:head(Stream), {Sbf1, Head, Tail}}.
 
-
-%%
-%% a predicate assign value to stream
--spec put(datalog:predicate()) -> _.
-
-put(#{'_' := [X,Y]}) ->
-   fun(_) ->
-      fun(Stream) ->
-         [pipe|stream:map(fun(Head) -> assign(X, Y, Head) end, Stream)]
-      end
-   end.
-
-assign(X, Y, Head)
- when not is_atom(Y) ->
-   Head#{X => Y};
-
-assign(X, Y, Head) ->
-   Head#{X => maps:get(Y, Head)}.
 
