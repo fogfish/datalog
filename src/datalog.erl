@@ -21,26 +21,43 @@
 -module(datalog).
 -include("datalog.hrl").
 
-%% evaluator interface
+%%
+%% datalog interface
 -export([
    horn/2, 
    q/2, 
-   q/3,
-   bind/2,
-   filter/2,
-   takewhile/2,
-   unique/1
+   q/3
 ]).
-%% build-in data types
--export([
-   list/1
-]).
+
+%%
 %% compiler interface
 -export([
    p/1,
    c/1,
    c/2
 ]).
+
+%%
+%% datalog built-in predicates
+-export([
+   unique/1,
+   eq/1, ne/1, lt/1, gt/1, le/1, ge/1
+]).
+
+%%
+%% sigma function utility 
+-export([
+   bind/2,
+   filter/2,
+   takewhile/2
+]).
+
+%%
+%% build-in data types
+-export([
+   list/1
+]).
+
 -export_type([q/0, eval/0, heap/0, predicate/0]).
 
 %%%----------------------------------------------------------------------------
@@ -59,8 +76,8 @@
 %% sigma function uses pattern as abstract sub-query definition towards the storage 
 -type predicate() :: #{'@' => name(), '_' => head(), _ => pattern()}.
 -type name()      :: f() | {module(), f()}.
--type pattern()   :: _ | [guard()].
--type guard()     :: {'>' | '<' | '>=' | '=<' | '=/=', _}.
+-type pattern()   :: _ | [filter()].
+-type filter()    :: {'>' | '<' | '>=' | '=<' | '=/=', _}.
 -type f()         :: atom().
 
 %% sigma function (@todo: define types)
@@ -106,7 +123,36 @@ q(Expr, Heap, X) ->
 %% ``` 
 -spec unique(predicate()) -> _.
 
-unique(X) -> datalog_lang:unique(X).  
+unique(X) -> datalog_lang:unique(X).
+
+%%
+%% comparison predicates
+%% ```
+%% h(x,z) :- a(x,y), b(y,z), :eq(x,z). 
+%% ``` 
+-spec eq(predicate()) -> _.
+
+eq(X) -> datalog_lang:eq(X).
+
+-spec ne(predicate()) -> _.
+
+ne(X) -> datalog_lang:ne(X).
+
+-spec lt(predicate()) -> _.
+
+lt(X) -> datalog_lang:lt(X).
+
+-spec gt(predicate()) -> _.
+
+gt(X) -> datalog_lang:gt(X).
+
+-spec le(predicate()) -> _.
+
+le(X) -> datalog_lang:le(X).
+
+-spec ge(predicate()) -> _.
+
+ge(X) -> datalog_lang:ge(X).
 
 
 %%%----------------------------------------------------------------------------
@@ -116,22 +162,25 @@ unique(X) -> datalog_lang:unique(X).
 %%%----------------------------------------------------------------------------
 
 %%
-%% bind sigma pattern with resolved variable in heap  
+%% bind pattern with resolved variable from heap  
 -spec bind(map(), pattern()) -> pattern().
 
-bind(Heap, Pattern) -> datalog_sigma:bind(Heap, Pattern).
+bind(Heap, Pattern) -> 
+   datalog_sigma:bind(Heap, Pattern).
 
 %%
-%% in-line stream filter(s)
+%% in-line stream filter(s) using predicate term and pattern 
 -spec filter(_, pattern()) -> fun( (_, datum:stream()) -> datum:stream() ).
 
-filter(X, Pattern) -> datalog_sigma:filter(X, Pattern).
+filter(X, Pattern) -> 
+   datalog_sigma:filter(fun stream:filter/2, X, Pattern).
 
 %%
-%% in-line stream filter(s)
+%% in-line stream filter(s) using predicate term and pattern 
 -spec takewhile(_, pattern()) -> fun( (_, datum:stream()) -> datum:stream() ).
 
-takewhile(X, Pattern) -> datalog_sigma:takewhile(X, Pattern).
+takewhile(X, Pattern) -> 
+   datalog_sigma:takewhile(fun stream:takewhile/2, X, Pattern).
 
 
 %%%----------------------------------------------------------------------------

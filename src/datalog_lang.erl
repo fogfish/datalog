@@ -18,7 +18,8 @@
 -module(datalog_lang).
 
 -export([
-   unique/1
+   unique/1,
+   eq/1, ne/1, lt/1, gt/1, le/1, ge/1
 ]).
 
 %%
@@ -45,5 +46,67 @@ uniq({Sbf0, Head, Stream}) ->
    Sbf1 = sbf:add(Item, Sbf0),
    Tail = stream:dropwhile(fun(X) -> sbf:has(maps:with(Head, X), Sbf1) end, Stream),
    {stream:head(Stream), {Sbf1, Head, Tail}}.
+
+
+%%
+%% comparison predicates
+%% ```
+%% h(x,z) :- a(x,y), b(y,z), :eq(x,z). 
+%% ``` 
+-spec eq(datalog:predicate()) -> _.
+
+eq(#{'_' := [A, B]}) ->
+   fun(_) ->
+      fun(Stream) ->
+         [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =:= Bx end, Stream)]
+      end
+   end.
+
+-spec ne(datalog:predicate()) -> _.
+
+ne(#{'_' := [A, B]}) ->
+   fun(_) ->
+      fun(Stream) ->
+         [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =/= Bx end, Stream)]
+      end
+   end.
+
+-spec lt(datalog:predicate()) -> _.
+
+lt(#{'_' := [A, B]}) ->
+   fun(_) ->
+      fun(Stream) ->
+         [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax < Bx end, Stream)]
+      end
+   end.
+
+-spec gt(datalog:predicate()) -> _.
+
+gt(#{'_' := [A, B]}) ->
+   fun(_) ->
+      fun(Stream) ->
+         [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax > Bx end, Stream)]
+      end
+   end.
+
+-spec le(datalog:predicate()) -> _.
+
+le(#{'_' := [A, B]}) ->
+   fun(_) ->
+      fun(Stream) ->
+         [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =< Bx end, Stream)]
+      end
+   end.
+
+-spec ge(datalog:predicate()) -> _.
+
+ge(#{'_' := [A, B]}) ->
+   fun(_) ->
+      fun(Stream) ->
+         [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax >= Bx end, Stream)]
+      end
+   end.
+
+
 
 

@@ -19,12 +19,11 @@
 
 -export([
    bind/2,
-   filter/2,
-   takewhile/2
+   filter/3
 ]).
 
 %%
-%% bind sigma pattern with resolved variable (resolved previously by sigma)  
+%% bind pattern with resolved variable from heap
 -spec bind(map(), datalog:pattern()) -> datalog:pattern().
 
 bind(Heap, Pattern) ->
@@ -34,45 +33,46 @@ bind(Heap, Pattern) ->
    % Thus any BIF are converted to pattern match
    maps:merge(Pattern, Heap).
 
-
 %%
-%% build a in-line stream filter(s)
--spec filter(_, datalog:pattern()) -> fun( (_, datum:stream()) -> datum:stream() ).
--spec takewhile(_, datalog:pattern()) -> fun( (_, datum:stream()) -> datum:stream() ).
+%% build an in-line stream filter using predicate term and pattern  
+-spec filter(_, _, datalog:pattern()) -> _.
 
-filter(X, Pattern) ->
-   streamwith(fun stream:filter/2, X, Pattern).
-
-takewhile(X, Pattern) ->
-   streamwith(fun stream:takewhile/2, X, Pattern).
-
-%%
-streamwith(Fun, X, Pattern)
- when is_atom(X) ->
-   %% guard term p(..., X, ...), X > 5
-   case Pattern of
-      #{X := Filter} when is_list(Filter) ->
-         streamwith(Fun, Filter);
-      #{X := Value} ->
-         streamwith(Fun, [{'=:=', Value}]);
-      _ ->
-         fun(_, Stream) -> Stream end
-   end;
-
-streamwith(Fun, Value, _) ->
-   %% in-line term p(..., 5, ...)
-   streamwith(Fun, [{'=:=', Value}]).
-
-streamwith(Fun, Filters) ->
-   fun(Lens, Stream) ->
-      lists:foldl(fun(Filter, Acc) -> filter(Fun, Filter, Lens, Acc) end, Stream, Filters)
+filter(With, Term, Pattern) ->
+   case filter_spec(Term, Pattern) of
+      undefined ->
+         fun(_, Stream) -> Stream end;
+      Filters ->
+         filter_fold(With, Filters)
    end.
 
-filter(Fun, {F, Val}, Lens, Stream) ->
-   Fun(fun(X) -> check(F, Lens(X), Val) end, Stream).
+filter_spec(Term, Pattern)
+ when is_atom(Term) ->
+   % the term is variable: p(..., X, ...), X > 5
+   case Pattern of
+      #{Term := Filter} when is_list(Filter) ->
+         Filter;
+      #{Term := Filter} ->
+         [{'=:=', Filter}];
+      _ ->
+         undefined
+   end;
 
-check('>',   A, B) -> A >  B;
-check('>=',  A, B) -> A >= B;
-check('<',   A, B) -> A  < B;
-check('=<',  A, B) -> A =< B;
-check('=:=', A, B) -> A =:= B.
+filter_spec(Term, _Pattern) ->
+   % the term is in-line value
+   [{'=:=', Term}].
+
+filter_fold(With, Filters) ->
+   fun(Lens, Stream) ->
+      lists:foldl(fun(Filter, Acc) -> filter_with(With, Lens, Filter, Acc) end, Stream, Filters)
+   end.
+
+filter_with(With, Lens, Filter, Stream) ->
+   With(fun(X) -> filter_check(Lens(X), Filter) end, Stream).
+
+filter_check(B, {'>',   A}) -> B >  A;
+filter_check(B, {'>=',  A}) -> B >= A;
+filter_check(B, {'<',   A}) -> B  < A;
+filter_check(B, {'=<',  A}) -> B =< A;
+filter_check(B, {'=:=', A}) -> B =:= A;
+filter_check(B, {'=/=', A}) -> B =/= A.
+

@@ -42,7 +42,7 @@ stream(X, Heap, #{'_' := Head} = Expr) ->
       %
       % 2. let's filter stream of tuples to match the pattern.
       % The pattern is already re-written, all bound variables are defined 
-      match(Head, datalog:bind(Heap, Expr), 
+      filter(Head, datalog:bind(Heap, Expr), 
          %  
          % 1. the arity of head element define super set of tuples that 
          % are matching the pattern. Let's build a stream of tuples 
@@ -64,51 +64,16 @@ build(Nary, List) ->
 
 %%
 %% build a stream filter for each bound variable or guard
-match(Head, Heap, Stream) ->
-   match(1, Head, Heap, Stream).
+filter(Head, Heap, Stream) ->
+   filter(1, Head, Heap, Stream).
 
-match(I, [H|T], Heap, Stream)
- when is_atom(H) ->
-   match(I + 1, T, Heap,
-      pattern(maps:get(H, Heap, undefined), I, Stream)
-   );
-match(I, [H|T], Heap, Stream) ->
-   match(I + 1, T, Heap,
-      pattern(H, I, Stream)
-   );
+filter(I, [H|T], Heap, Stream0) ->
+   Filter  = datalog:filter(H, Heap),
+   Stream1 = Filter(fun(X) -> erlang:element(I, X) end, Stream0),
+   filter(I + 1, T, Heap, Stream1);
 
-match(_, [], _, Stream) ->
+filter(_, [], _, Stream) ->
    Stream.
-
-%%
-%%
-pattern(undefined, _, Stream) ->
-   Stream;
-
-pattern(Filter, I, Stream)
- when is_list(Filter) ->
-   lists:foldl(fun(F, Acc) -> filter(F, I, Acc) end, Stream, Filter);
-
-pattern(Val, I, Stream) ->
-   stream:filter(
-      fun(X) -> 
-         erlang:element(I, X) =:= Val 
-      end, 
-      Stream
-   ).   
-  
-filter({F, Val}, I, Stream) ->
-   stream:filter(
-      fun(X) -> 
-         check(F, erlang:element(I, X), Val) 
-      end, 
-      Stream
-   ).
-
-check('>',  A, B) -> A >  B;
-check('>=', A, B) -> A >= B;
-check('<',  A, B) -> A  < B;
-check('=<', A, B) -> A =< B.
 
 
 %%
