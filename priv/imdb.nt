@@ -96,7 +96,7 @@
 
 <http://example.org/person/131> <http://schema.org/name> "Charles Napier"^^<http://www.w3.org/2001/XMLSchema#string> .
 <http://example.org/person/131> <http://schema.org/born> "1936-04-12"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/person/131> <http://schema.org/death> <"2011-10-05"^^<http://www.w3.org/2001/XMLSchema#string> .
+<http://example.org/person/131> <http://schema.org/death> "2011-10-05"^^<http://www.w3.org/2001/XMLSchema#string> .
 
 <http://example.org/person/132> <http://schema.org/name> "Peter MacDonald"^^<http://www.w3.org/2001/XMLSchema#string> .
 
@@ -155,146 +155,146 @@
 <http://example.org/movie/200> <http://schema.org/cast> <http://example.org/person/101> .
 <http://example.org/movie/200> <http://schema.org/cast> <http://example.org/person/102> .
 <http://example.org/movie/200> <http://schema.org/cast> <http://example.org/person/103> .
-<http://example.org/movie/200> <http://schema.org/sequel>  <http://example.org/movie/207> .
+<http://example.org/movie/200> <http://schema.org/sequel> <http://example.org/movie/207> .
 
 <http://example.org/movie/201> <http://schema.org/title> "First Blood"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/201> <http://schema.org/year>  "1982"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/201> <http://schema.org/director>  <http://example.org/person/104> .
+<http://example.org/movie/201> <http://schema.org/year> "1982"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/201> <http://schema.org/director> <http://example.org/person/104> .
 <http://example.org/movie/201> <http://schema.org/cast> <http://example.org/person/105> .
 <http://example.org/movie/201> <http://schema.org/cast> <http://example.org/person/106> .
 <http://example.org/movie/201> <http://schema.org/cast> <http://example.org/person/107> .
-<http://example.org/movie/201> <http://schema.org/sequel>  <http://example.org/movie/209> .
+<http://example.org/movie/201> <http://schema.org/sequel> <http://example.org/movie/209> .
 
 <http://example.org/movie/202> <http://schema.org/title> "Predator"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/202> <http://schema.org/year>  "1987"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/202> <http://schema.org/director>  <http://example.org/person/108> .
+<http://example.org/movie/202> <http://schema.org/year> "1987"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/202> <http://schema.org/director> <http://example.org/person/108> .
 <http://example.org/movie/202> <http://schema.org/cast> <http://example.org/person/101> .
 <http://example.org/movie/202> <http://schema.org/cast> <http://example.org/person/109> .
 <http://example.org/movie/202> <http://schema.org/cast> <http://example.org/person/110> .
-<http://example.org/movie/202> <http://schema.org/sequel>  <http://example.org/movie/211> .
+<http://example.org/movie/202> <http://schema.org/sequel> <http://example.org/movie/211> .
 
 <http://example.org/movie/203> <http://schema.org/title> "Lethal Weapon"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/203> <http://schema.org/year>  "1987"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/203> <http://schema.org/director>  <http://example.org/person/111> .
+<http://example.org/movie/203> <http://schema.org/year> "1987"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/203> <http://schema.org/director> <http://example.org/person/111> .
 <http://example.org/movie/203> <http://schema.org/cast> <http://example.org/person/112> .
 <http://example.org/movie/203> <http://schema.org/cast> <http://example.org/person/113> .
 <http://example.org/movie/203> <http://schema.org/cast> <http://example.org/person/114> .
-<http://example.org/movie/203> <http://schema.org/sequel>  <http://example.org/movie/212> .
+<http://example.org/movie/203> <http://schema.org/sequel> <http://example.org/movie/212> .
 
 <http://example.org/movie/204> <http://schema.org/title> "RoboCop"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/204> <http://schema.org/year>  "1987"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/204> <http://schema.org/director>  <http://example.org/person/115> .
+<http://example.org/movie/204> <http://schema.org/year> "1987"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/204> <http://schema.org/director> <http://example.org/person/115> .
 <http://example.org/movie/204> <http://schema.org/cast> <http://example.org/person/116> .
 <http://example.org/movie/204> <http://schema.org/cast> <http://example.org/person/117> .
 <http://example.org/movie/204> <http://schema.org/cast> <http://example.org/person/118> .
 
 <http://example.org/movie/205> <http://schema.org/title> "Commando"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/205> <http://schema.org/year>  "1985"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/205> <http://schema.org/director>  <http://example.org/person/119> .
+<http://example.org/movie/205> <http://schema.org/year> "1985"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/205> <http://schema.org/director> <http://example.org/person/119> .
 <http://example.org/movie/205> <http://schema.org/cast> <http://example.org/person/101> .
 <http://example.org/movie/205> <http://schema.org/cast> <http://example.org/person/120> .
 <http://example.org/movie/205> <http://schema.org/cast> <http://example.org/person/121> .
 
 <http://example.org/movie/206> <http://schema.org/title> "Die Hard"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/206> <http://schema.org/year>  "1988"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/206> <http://schema.org/director>  <http://example.org/person/108> .
+<http://example.org/movie/206> <http://schema.org/year> "1988"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/206> <http://schema.org/director> <http://example.org/person/108> .
 <http://example.org/movie/206> <http://schema.org/cast> <http://example.org/person/122> .
 <http://example.org/movie/206> <http://schema.org/cast> <http://example.org/person/123> .
 <http://example.org/movie/206> <http://schema.org/cast> <http://example.org/person/124> .
 
 <http://example.org/movie/207> <http://schema.org/title> "Terminator 2: Judgment Day"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/207> <http://schema.org/year>  "1991"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/207> <http://schema.org/director>  <http://example.org/person/100> .
+<http://example.org/movie/207> <http://schema.org/year> "1991"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/207> <http://schema.org/director> <http://example.org/person/100> .
 <http://example.org/movie/207> <http://schema.org/cast> <http://example.org/person/101> .
 <http://example.org/movie/207> <http://schema.org/cast> <http://example.org/person/102> .
 <http://example.org/movie/207> <http://schema.org/cast> <http://example.org/person/125> .
 <http://example.org/movie/207> <http://schema.org/cast> <http://example.org/person/126> .
-<http://example.org/movie/207> <http://schema.org/sequel>  <http://example.org/movie/208> .
+<http://example.org/movie/207> <http://schema.org/sequel> <http://example.org/movie/208> .
 
 <http://example.org/movie/208> <http://schema.org/title> "Terminator 3: Rise of the Machines"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/208> <http://schema.org/year>  "2003"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/208> <http://schema.org/director>  <http://example.org/person/127> .
+<http://example.org/movie/208> <http://schema.org/year> "2003"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/208> <http://schema.org/director> <http://example.org/person/127> .
 <http://example.org/movie/208> <http://schema.org/cast> <http://example.org/person/101> .
 <http://example.org/movie/208> <http://schema.org/cast> <http://example.org/person/128> .
 <http://example.org/movie/208> <http://schema.org/cast> <http://example.org/person/129> .
 
 <http://example.org/movie/209> <http://schema.org/title> "Rambo: First Blood Part II"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/209> <http://schema.org/year>  "1985"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/209> <http://schema.org/director>  <http://example.org/person/130> .
+<http://example.org/movie/209> <http://schema.org/year> "1985"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/209> <http://schema.org/director> <http://example.org/person/130> .
 <http://example.org/movie/209> <http://schema.org/cast> <http://example.org/person/105> .
 <http://example.org/movie/209> <http://schema.org/cast> <http://example.org/person/106> .
 <http://example.org/movie/209> <http://schema.org/cast> <http://example.org/person/131> .
-<http://example.org/movie/209> <http://schema.org/sequel>  <http://example.org/movie/210> .
+<http://example.org/movie/209> <http://schema.org/sequel> <http://example.org/movie/210> .
 
 <http://example.org/movie/210> <http://schema.org/title> "Rambo III"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/210> <http://schema.org/year>  "1988"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/210> <http://schema.org/director>  <http://example.org/person/132> .
+<http://example.org/movie/210> <http://schema.org/year> "1988"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/210> <http://schema.org/director> <http://example.org/person/132> .
 <http://example.org/movie/210> <http://schema.org/cast> <http://example.org/person/105> .
 <http://example.org/movie/210> <http://schema.org/cast> <http://example.org/person/106> .
 <http://example.org/movie/210> <http://schema.org/cast> <http://example.org/person/133> .
 
 <http://example.org/movie/211> <http://schema.org/title> "Predator 2"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/211> <http://schema.org/year>  "1990"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/211> <http://schema.org/director>  <http://example.org/person/134> .
+<http://example.org/movie/211> <http://schema.org/year> "1990"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/211> <http://schema.org/director> <http://example.org/person/134> .
 <http://example.org/movie/211> <http://schema.org/cast> <http://example.org/person/113> .
 <http://example.org/movie/211> <http://schema.org/cast> <http://example.org/person/114> .
 <http://example.org/movie/211> <http://schema.org/cast> <http://example.org/person/135> .
 
 <http://example.org/movie/212> <http://schema.org/title> "Lethal Weapon 2"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/212> <http://schema.org/year>  "1989"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/212> <http://schema.org/director>  <http://example.org/person/111> .
+<http://example.org/movie/212> <http://schema.org/year> "1989"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/212> <http://schema.org/director> <http://example.org/person/111> .
 <http://example.org/movie/212> <http://schema.org/cast> <http://example.org/person/112> .
 <http://example.org/movie/212> <http://schema.org/cast> <http://example.org/person/113> .
 <http://example.org/movie/212> <http://schema.org/cast> <http://example.org/person/136> .
-<http://example.org/movie/212> <http://schema.org/sequel>  <http://example.org/movie/213> .
+<http://example.org/movie/212> <http://schema.org/sequel> <http://example.org/movie/213> .
 
 <http://example.org/movie/213> <http://schema.org/title> "Lethal Weapon 3"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/213> <http://schema.org/year>  "1992"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/213> <http://schema.org/director>  <http://example.org/person/111> .
+<http://example.org/movie/213> <http://schema.org/year> "1992"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/213> <http://schema.org/director> <http://example.org/person/111> .
 <http://example.org/movie/213> <http://schema.org/cast> <http://example.org/person/112> .
 <http://example.org/movie/213> <http://schema.org/cast> <http://example.org/person/113> .
 <http://example.org/movie/213> <http://schema.org/cast> <http://example.org/person/136> .
 
 <http://example.org/movie/214> <http://schema.org/title> "Alien"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/214> <http://schema.org/year>  "1979"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/214> <http://schema.org/director>  <http://example.org/person/137> .
+<http://example.org/movie/214> <http://schema.org/year> "1979"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/214> <http://schema.org/director> <http://example.org/person/137> .
 <http://example.org/movie/214> <http://schema.org/cast> <http://example.org/person/138> .
 <http://example.org/movie/214> <http://schema.org/cast> <http://example.org/person/139> .
 <http://example.org/movie/214> <http://schema.org/cast> <http://example.org/person/140> .
-<http://example.org/movie/214> <http://schema.org/sequel>  <http://example.org/movie/215> .
+<http://example.org/movie/214> <http://schema.org/sequel> <http://example.org/movie/215> .
 
 <http://example.org/movie/215> <http://schema.org/title> "Aliens"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/215> <http://schema.org/year>  "1986"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/215> <http://schema.org/director>  <http://example.org/person/100> .
+<http://example.org/movie/215> <http://schema.org/year> "1986"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/215> <http://schema.org/director> <http://example.org/person/100> .
 <http://example.org/movie/215> <http://schema.org/cast> <http://example.org/person/139> .
 <http://example.org/movie/215> <http://schema.org/cast> <http://example.org/person/141> .
 <http://example.org/movie/215> <http://schema.org/cast> <http://example.org/person/103> .
 
 <http://example.org/movie/216> <http://schema.org/title> "Mad Max"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/216> <http://schema.org/year>  "1979"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/216> <http://schema.org/director>  <http://example.org/person/142> .
+<http://example.org/movie/216> <http://schema.org/year> "1979"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/216> <http://schema.org/director> <http://example.org/person/142> .
 <http://example.org/movie/216> <http://schema.org/cast> <http://example.org/person/112> .
 <http://example.org/movie/216> <http://schema.org/cast> <http://example.org/person/143> .
 <http://example.org/movie/216> <http://schema.org/cast> <http://example.org/person/144> .
-<http://example.org/movie/216> <http://schema.org/sequel>  <http://example.org/movie/217> .
+<http://example.org/movie/216> <http://schema.org/sequel> <http://example.org/movie/217> .
 
 <http://example.org/movie/217> <http://schema.org/title> "Mad Max 2"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/217> <http://schema.org/year>  "1981"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/217> <http://schema.org/director>  <http://example.org/person/142> .
+<http://example.org/movie/217> <http://schema.org/year> "1981"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/217> <http://schema.org/director> <http://example.org/person/142> .
 <http://example.org/movie/217> <http://schema.org/cast> <http://example.org/person/112> .
 <http://example.org/movie/217> <http://schema.org/cast> <http://example.org/person/145> .
 <http://example.org/movie/217> <http://schema.org/cast> <http://example.org/person/146> .
-<http://example.org/movie/217> <http://schema.org/sequel>  <http://example.org/movie/218> .
+<http://example.org/movie/217> <http://schema.org/sequel> <http://example.org/movie/218> .
 
 <http://example.org/movie/218> <http://schema.org/title> "Mad Max Beyond Thunderdome"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/218> <http://schema.org/year>  "1985"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/218> <http://schema.org/director>  <http://example.org/person/142> .
-<http://example.org/movie/218> <http://schema.org/director>  <http://example.org/person/147> .
+<http://example.org/movie/218> <http://schema.org/year> "1985"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/218> <http://schema.org/director> <http://example.org/person/142> .
+<http://example.org/movie/218> <http://schema.org/director> <http://example.org/person/147> .
 <http://example.org/movie/218> <http://schema.org/cast> <http://example.org/person/112> .
 <http://example.org/movie/218> <http://schema.org/cast> <http://example.org/person/148> .
 
 <http://example.org/movie/219> <http://schema.org/title> "Braveheart"^^<http://www.w3.org/2001/XMLSchema#string> .
-<http://example.org/movie/219> <http://schema.org/year>  "1995"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<http://example.org/movie/219> <http://schema.org/director>  <http://example.org/person/112> .
+<http://example.org/movie/219> <http://schema.org/year> "1995"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://example.org/movie/219> <http://schema.org/director> <http://example.org/person/112> .
 <http://example.org/movie/219> <http://schema.org/cast> <http://example.org/person/112> .
 <http://example.org/movie/219> <http://schema.org/cast> <http://example.org/person/149> .
