@@ -40,7 +40,7 @@
 %%
 %% datalog built-in predicates
 -export([
-   unique/1,
+   unique/1, flat/1,
    eq/1, ne/1, lt/1, gt/1, le/1, ge/1
 ]).
 
@@ -119,16 +119,20 @@ q(Expr, Heap, X) ->
 %%
 %% a predicate ensures unique terms within the stream
 %% ```
-%% h(x,z) :- a(x,y), b(y,z), :unique(x,z). 
+%% h(x,z) :- a(x,y), b(y,z), .unique(x,z). 
 %% ``` 
 -spec unique(predicate()) -> _.
 
 unique(X) -> datalog_lang:unique(X).
 
+-spec flat(predicate()) -> _.
+
+flat(X) -> datalog_lang:flat(X).
+
 %%
 %% comparison predicates
 %% ```
-%% h(x,z) :- a(x,y), b(y,z), :eq(x,z). 
+%% h(x,z) :- a(x,y), b(y,z), .eq(x,z). 
 %% ``` 
 -spec eq(predicate()) -> _.
 

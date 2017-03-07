@@ -18,7 +18,7 @@
 -module(datalog_lang).
 
 -export([
-   unique/1,
+   unique/1, flat/1,
    eq/1, ne/1, lt/1, gt/1, le/1, ge/1
 ]).
 
@@ -47,6 +47,38 @@ uniq({Sbf0, Head, Stream}) ->
    Tail = stream:dropwhile(fun(X) -> sbf:has(maps:with(Head, X), Sbf1) end, Stream),
    {stream:head(Stream), {Sbf1, Head, Tail}}.
 
+%%
+%% a predicate flatmap identity over stream 
+%% ```
+%% h(x,z) :- a(x,y), .flat(y), b(y,z) . 
+%% ``` 
+-spec flat(datalog:predicate()) -> _.
+
+flat(#{'_' := [Term]}) ->
+   fun(_) ->
+      fun(Stream) ->
+         [pipe|stream:unfold(fun flatten/1, {[], Term, Stream})]
+      end
+   end.
+
+flatten({_, _, {}}) ->
+   stream:new();
+
+flatten({[], Term, Stream}) ->
+   case stream:head(Stream) of
+      #{Term := X} when is_list(X) ->
+         flatten({X, Term, Stream});
+      Head ->
+         {Head, {[], Term, stream:tail(Stream)}}
+   end;
+
+flatten({[H], Term, Stream}) ->
+   Head = stream:head(Stream),
+   {Head#{Term => H}, {[], Term, stream:tail(Stream)}};
+
+flatten({[H|T], Term, Stream}) ->
+   Head = stream:head(Stream),
+   {Head#{Term => H}, {T, Term, Stream}}.
 
 %%
 %% comparison predicates
