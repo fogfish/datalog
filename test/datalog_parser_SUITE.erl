@@ -28,10 +28,15 @@
   ,end_per_group/2
 ]).
 -export([
-   basic_all/1
-  ,jsonld_support/1
-  ,imdb_person_1/1
-  ,imdb_person_2/1
+   horn_1/1, horn_n/1,
+   inline_string/1, inline_int/1, inline_float/1,
+   anything/1,
+   guard_eq_string/1, guard_eq_int/1, guard_eq_float/1,
+   guard_gt_string/1, guard_gt_int/1, guard_gt_float/1,         
+   guard_string/1, guard_number/1,
+   bif_datalog/1, bif_external/1,
+   semantic_web/1,
+   jsonld/1
 ]).
 
 %%%----------------------------------------------------------------------------   
@@ -42,18 +47,21 @@
 
 all() ->
    [
-      {group, basic}, {group, imdb}
+      {group, datalog}
    ].
 
 groups() ->
    [
-      {basic, [], [
-         basic_all,
-         jsonld_support
-      ]}
-     ,{imdb,  [], [
-         imdb_person_1
-        ,imdb_person_2
+      {datalog, [parallel], [
+         horn_1, horn_n,
+         inline_string, inline_int, inline_float,
+         anything,
+         guard_eq_string, guard_eq_int, guard_eq_float,
+         guard_gt_string, guard_gt_int, guard_gt_float,         
+         guard_string, guard_number,
+         bif_datalog, bif_external,
+         semantic_web,
+         jsonld
       ]}
    ].
 
@@ -69,26 +77,14 @@ groups() ->
 init_per_suite(Config) ->
    Config.
 
-%%
-%%
 end_per_suite(_Config) ->
    ok.
 
 %%   
 %%
-init_per_group(basic, Config) ->
-   List = [{a,1}, {b,1}, {c,2}, {d,2}, {e,3}, {f,3}, {g,4}, {h,4}, {i,5}, {j,5}],
-   [{list, List} | Config];
-
-init_per_group(imdb, Config) ->
-   {ok, List} = file:consult(filename:join([code:priv_dir(datalog), "imdb.config"])),
-   [{list, List} | Config];
-
 init_per_group(_, Config) ->
    Config.
 
-%%
-%%
 end_per_group(_, _Config) ->
    ok.
 
@@ -98,38 +94,165 @@ end_per_group(_, _Config) ->
 %%%
 %%%----------------------------------------------------------------------------   
 
-basic_all(_) ->
+%%
+%%
+horn_1(_Config) ->
    #{
-      all := [[x,y], 
-         #{'@' := like, '_' := [x,y]}
+      h := [[x,y], 
+         #{'@' := a, '_' := [x,y]}
       ]
-   } = datalog:p("all(X,Y) :- like(X,Y).").
+   } = datalog:p("h(x,y) :- a(x, y).").
 
-imdb_person_1(_) ->
+horn_n(_Config) ->
    #{
-      id := [[x,name, <<"Ridley Scott">>],
-         #{'@' := like, '_' := [x,y,z]}
+      h := [[x,z], 
+         #{'@' := a, '_' := [x,y]},
+         #{'@' := b, '_' := [y,z]}
       ]
-   } = datalog:p("id(X,name,\"Ridley Scott\") :- like(X,Y,Z).").
+   } = datalog:p("h(x,z) :- a(x, y), b(y, z).").
 
-imdb_person_2(_) ->
+%%
+%%
+inline_string(_Config) ->
    #{
-      id := [[x,<<"Ridley Scott">>],
-         #{'@' := like, '_' := [x,name,z]}
+      h := [[z], 
+         #{'@' := a, '_' := [<<"x">>,y]},
+         #{'@' := b, '_' := [y,z]}
       ]
-   } = datalog:p("id(X,\"Ridley Scott\") :- like(X,name,Z).").
+   } = datalog:p("h(z) :- a(\"x\", y), b(y, z).").
 
-jsonld_support(_) ->
+inline_int(_Config) ->
    #{
-      id := [['@id', '@type'],
-         #{'@' := like, '_' := ['@id',name,'@type']}
+      h := [[z], 
+         #{'@' := a, '_' := [100,y]},
+         #{'@' := b, '_' := [y,z]}
       ]
-   } = datalog:p("id(@id, @type) :- like(@id,name,@type).").
-   
-urn_support(_) ->
+   } = datalog:p("h(z) :- a(100, y), b(y, z).").
+
+inline_float(_Config) ->
    #{
-      id := [[x,y],
-         #{'@' := 'urn:type:like',  '_' := [x,'urn:type:name',y]}
+      h := [[z], 
+         #{'@' := a, '_' := [1.0,y]},
+         #{'@' := b, '_' := [y,z]}
       ]
-   } = datalog:p("id(X, Y) :- urn:type:like(X,urn:type:name,Y).").
-   
+   } = datalog:p("h(z) :- a(1.0, y), b(y, z).").
+
+%%
+%%
+anything(_Config) ->
+   #{
+      h := [[z], 
+         #{'@' := a, '_' := ['_',y]},
+         #{'@' := b, '_' := [y,z]}
+      ]
+   } = datalog:p("h(z) :- a(_, y), b(y, z).").
+
+%%
+%%
+guard_eq_string(_Config) ->
+   #{
+      h := [[x,z], 
+         #{'@' := a, '_' := [x,y], x := <<"x">>},
+         #{'@' := b, '_' := [y,z]}
+      ]
+   } = datalog:p("h(x,z) :- a(x, y), b(y, z), x = \"x\".").
+
+guard_eq_int(_Config) ->
+   #{
+      h := [[x,z], 
+         #{'@' := a, '_' := [x,y], x := 100},
+         #{'@' := b, '_' := [y,z]}
+      ]
+   } = datalog:p("h(x,z) :- a(x, y), b(y, z), x = 100.").
+
+guard_eq_float(_Config) ->
+   #{
+      h := [[x,z], 
+         #{'@' := a, '_' := [x,y], x := 1.0},
+         #{'@' := b, '_' := [y,z]}
+      ]
+   } = datalog:p("h(x,z) :- a(x, y), b(y, z), x = 1.0.").
+
+%%
+%%
+guard_gt_string(_Config) ->
+   #{
+      h := [[x,z], 
+         #{'@' := a, '_' := [x,y], x := [{'>', <<"x">>}]},
+         #{'@' := b, '_' := [y,z]}
+      ]
+   } = datalog:p("h(x,z) :- a(x, y), b(y, z), x > \"x\".").
+
+guard_gt_int(_Config) ->
+   #{
+      h := [[x,z], 
+         #{'@' := a, '_' := [x,y], x := [{'>', 100}]},
+         #{'@' := b, '_' := [y,z]}
+      ]
+   } = datalog:p("h(x,z) :- a(x, y), b(y, z), x > 100.").
+
+guard_gt_float(_Config) ->
+   #{
+      h := [[x,z], 
+         #{'@' := a, '_' := [x,y], x := [{'>', 1.0}]},
+         #{'@' := b, '_' := [y,z]}
+      ]
+   } = datalog:p("h(x,z) :- a(x, y), b(y, z), x > 1.0.").
+
+
+%%
+%%
+guard_string(_Config) ->
+   #{
+      h := [[x,z], 
+         #{'@' := a, '_' := [x,y], x := [{'>=', <<"x">>}, {'=<', <<"z">>}]},
+         #{'@' := b, '_' := [y,z]}
+      ]
+   } = datalog:p("h(x,z) :- a(x, y), b(y, z), x >= \"x\", x =< \"z\" .").
+
+guard_number(_Config) ->
+   #{
+      h := [[x,z], 
+         #{'@' := a, '_' := [x,y], x := [{'>=', 1.0}, {'=<', 100}]},
+         #{'@' := b, '_' := [y,z]}
+      ]
+   } = datalog:p("h(x,z) :- a(x, y), b(y, z), x >= 1.0, x =< 100.").
+
+
+%%
+%%
+bif_datalog(_Config) ->
+   #{
+      h := [[x,z], 
+         #{'@' := {datalog, a}, '_' := [x,y]},
+         #{'@' := {datalog, b}, '_' := [y,z]}
+      ]
+   } = datalog:p("h(x,z) :- .a(x, y), .b(y, z).").
+
+bif_external(_Config) ->
+   #{
+      h := [[x,z], 
+         #{'@' := {mod, a}, '_' := [x,y]},
+         #{'@' := {mod, b}, '_' := [y,z]}
+      ]
+   } = datalog:p("h(x,z) :- mod.a(x, y), mod.b(y, z).").
+
+%%
+%%
+semantic_web(_Config) ->
+   #{
+      'foaf:person' := [['rdf:id', 'foaf:name'], 
+         #{'@' := 'foaf:person', '_' := ['rdf:id', 'foaf:name'], 'foaf:name' := [{'>', <<"A">>}, {'<', <<"B">>}]}
+      ]
+   } = datalog:p("foaf:person(rdf:id, foaf:name) :- foaf:person(rdf:id, foaf:name), foaf:name > \"A\", foaf:name < \"B\".").
+
+%%
+%%
+jsonld(_Config) ->
+   #{
+      h := [['@id',z], 
+         #{'@' := a, '_' := ['@id', '@type']},
+         #{'@' := b, '_' := ['@type', z]}
+      ]
+   } = datalog:p("h(@id,z) :- a(@id, @type), b(@type, z).").
+

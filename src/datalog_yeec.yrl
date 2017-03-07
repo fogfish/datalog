@@ -17,7 +17,7 @@
 %%   datalog
 
 Nonterminals   CLAUSES HORN BODY ITEM GUARD TERMS.
-Terminals      ':-' '(' ')' ':' '.' ',' '<' '=' '>' '!' '_' lit symbol.
+Terminals      ':-' '(' ')' '.' ',' '<' '=' '>' '!' '_' lit symbol.
 Rootsymbol     CLAUSES.
 
 
@@ -40,10 +40,10 @@ BODY -> ITEM :
 ITEM -> symbol '(' TERMS ')' :
    {unwrap('$1'), '$3'}.
 
-ITEM -> symbol ':' symbol '(' TERMS ')' :
+ITEM -> symbol '.' symbol '(' TERMS ')' :
    {{unwrap('$1'), unwrap('$3')}, '$5'}.
 
-ITEM -> ':' symbol '(' TERMS ')' :
+ITEM -> '.' symbol '(' TERMS ')' :
    {{datalog, unwrap('$2')}, '$4'}.
 
 ITEM -> symbol GUARD lit :

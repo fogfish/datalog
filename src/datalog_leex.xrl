@@ -17,8 +17,8 @@
 %%   datalog
 Definitions.
 
-LC    = [a-z_@]
-UC    = [A-Z_@]
+LC    = [a-z_@:]
+UC    = [A-Z_@:]
 DIGIT = [0-9]
 WS    = ([\000-\s]|%.*)
 
@@ -48,7 +48,7 @@ Rules.
 \:\- :
    {token,{list_to_atom(TokenChars),TokenLine}}.
 
-[:()\[\]_<=>!.,] :
+[()\[\]_<=>!.,] :
    {token,{list_to_atom(TokenChars),TokenLine}}.
 
 {WS}+  : skip_token.
