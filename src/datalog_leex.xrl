@@ -17,8 +17,7 @@
 %%   datalog
 Definitions.
 
-LC    = [a-z_@:]
-UC    = [A-Z_@:]
+CHAR  = [a-zA-Z_@:]
 DIGIT = [0-9]
 WS    = ([\000-\s]|%.*)
 
@@ -26,10 +25,8 @@ WS    = ([\000-\s]|%.*)
 %%
 Rules.
 
-{LC}+{UC}*  :
+{CHAR}+  :
    {token, {symbol, TokenLine, list_to_atom(TokenChars)}}.
-{UC}+{LC}*  :
-   {token, {symbol, TokenLine, list_to_atom(string:to_lower(TokenChars))}}.
 
 %%
 %% literals
