@@ -26,7 +26,7 @@ WS    = ([\000-\s]|%.*)
 %%
 Rules.
 
-{LC}+   :
+{LC}+{UC}*  :
    {token, {symbol, TokenLine, list_to_atom(TokenChars)}}.
 {UC}+{LC}*  :
    {token, {symbol, TokenLine, list_to_atom(string:to_lower(TokenChars))}}.
