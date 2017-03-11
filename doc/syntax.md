@@ -20,6 +20,7 @@ h(z) :- a(_, y), b(y, z).
 ## guards
 ```
 h(x,z) :- a(x, y), b(y, z), x = "x".
+h(x,z) :- a(x, y), b(y, z), x = ("x", "y", "z").
 h(x,z) :- a(x, y), b(y, z), x > 100.
 h(x,z) :- a(x, y), b(y, z), x < 1.0.
 h(x,z) :- a(x, y), b(y, z), x >= 1.0, x =< 100.
