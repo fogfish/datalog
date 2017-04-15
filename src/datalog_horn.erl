@@ -34,13 +34,13 @@ stream(Head, Body) ->
 compose(Fun, Stream) ->
    compose(Fun(Stream), Fun, Stream).
 
-compose({s, _, _} = Egress, Fun, Stream) ->
-   % evaluator function produce an egress stream to join with ingress stream
-   stream:unfold(fun unfold/1, {Egress, Fun, stream:head(Stream), stream:tail(Stream)});
-
 compose([pipe|Egress], _, _) ->
    % evaluator function is stream modifier, it produce a new egress stream to output
-   Egress.
+   Egress;
+
+compose(Egress, Fun, Stream) ->
+   % evaluator function produce an egress stream to join with ingress stream
+   stream:unfold(fun unfold/1, {Egress, Fun, stream:head(Stream), stream:tail(Stream)}).
 
 %%
 %% 
