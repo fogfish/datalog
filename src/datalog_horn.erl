@@ -31,6 +31,8 @@ stream(Head, Body) ->
 
 %%
 %% compose sigma evaluator to stream 
+compose(_, {}) ->
+   stream:new();
 compose(Fun, Stream) ->
    compose(Fun(Stream), Fun, Stream).
 
