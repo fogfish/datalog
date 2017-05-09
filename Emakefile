@@ -2,6 +2,6 @@
    report, 
    verbose, 
    {i, "include"}, 
-   {outdir, "ebin"},
+   {outdir, "_build/default/lib/datalog/ebin"},
    debug_info 
 ]}.

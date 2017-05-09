@@ -227,7 +227,7 @@ p(Datalog) ->
 
 %%
 %% compile native datalog to evaluator function 
--spec c(q()) -> heap().
+-spec c(datalog:q()) -> heap().
 
 c(Datalog) ->
    c(datalog, Datalog).
