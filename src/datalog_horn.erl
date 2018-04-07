@@ -16,7 +16,9 @@
 %% @doc
 %%   horn clause evaluator
 -module(datalog_horn).
+
 -include("datalog.hrl").
+-include_lib("datum/include/datum.hrl").
 
 -export([stream/2]).
 
@@ -31,7 +33,7 @@ stream(Head, Body) ->
 
 %%
 %% compose sigma evaluator to stream 
-compose(_, {}) ->
+compose(_, ?stream()) ->
    stream:new();
 compose(Fun, Stream) ->
    compose(Fun(Stream), Fun, Stream).
@@ -40,7 +42,7 @@ compose([pipe|Egress], _, _) ->
    % evaluator function is stream modifier, it produce a new egress stream to output
    Egress;
 
-compose(_, _, {}) ->
+compose(_, _, ?stream()) ->
    stream:new();
 
 compose(Egress, Fun, Stream) ->
@@ -49,13 +51,13 @@ compose(Egress, Fun, Stream) ->
 
 %%
 %% 
-unfold({{}, _, _, {}}) ->
+unfold({?stream(), _, _, ?stream()}) ->
    stream:new();
 
-unfold({{}, Fun, _, Stream}) ->
+unfold({?stream(), Fun, _, Stream}) ->
    unfold({Fun(Stream), Fun, stream:head(Stream), stream:tail(Stream)});
 
-unfold({{s, _, _} = Egress, Fun, Head, Stream}) ->
+unfold({#stream{} = Egress, Fun, Head, Stream}) ->
    {
       maps:merge(stream:head(Egress), Head), 
       {stream:tail(Egress), Fun, Head, Stream}

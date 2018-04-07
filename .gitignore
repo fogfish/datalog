@@ -7,7 +7,6 @@
 *.tgz
 _build/
 tests/
-rebar.lock
 rebar3
 *_leex.erl
 *_yeec.erl

@@ -17,6 +17,8 @@
 %%   build-in datalog primitives
 -module(datalog_lang).
 
+-include_lib("datum/include/datum.hrl").
+
 -export([
    unique/1, flat/1,
    eq/1, ne/1, lt/1, gt/1, le/1, ge/1
@@ -38,7 +40,7 @@ unique(#{'_' := Head}) ->
       end
    end.
 
-uniq({_, _, {}}) ->
+uniq({_, _, ?stream()}) ->
    stream:new();  
 
 uniq({Sbf0, Head, Stream}) ->
@@ -61,7 +63,7 @@ flat(#{'_' := [Term]}) ->
       end
    end.
 
-flatten({_, _, {}}) ->
+flatten({_, _, ?stream()}) ->
    stream:new();
 
 flatten({[], Term, Stream}) ->
