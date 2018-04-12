@@ -261,10 +261,8 @@ cc_eval(Mod, Fun, Pat) ->
 
 chorn(Mod, Datalog) ->
    {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
-   datalog:horn(Head, [#{'@' => cc_horn(Mod, Body), '_' => Head}]).
+   datalog:horn(Head, Mod:sigma(#{'@' => Body, '_' => Head})).
 
-cc_horn(Mod, Pat) ->
-   Mod:sigma(Pat).
 
 
 
