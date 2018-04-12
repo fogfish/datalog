@@ -34,7 +34,8 @@
 -export([
    p/1,
    c/1,
-   c/2
+   c/2,
+   chorn/2
 ]).
 
 %%
@@ -253,4 +254,17 @@ cc_eval(Mod, Fun, Pat) ->
       _        ->
          Mod:sigma(Pat)
    end.
+
+%%
+%% compile native datalog horn as single function 
+-spec chorn(atom(), datalog:q()) -> heap().
+
+chorn(Mod, Datalog) ->
+   {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
+   datalog:horn(Head, [#{'@' => cc_horn(Mod, Body), '_' => Head}]).
+
+cc_horn(Mod, Pat) ->
+   Mod:sigma(Pat).
+
+
 
