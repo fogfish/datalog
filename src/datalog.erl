@@ -261,7 +261,15 @@ cc_eval(Mod, Fun, Pat) ->
 
 chorn(Mod, Datalog) ->
    {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
-   datalog:horn(Head, [Mod:sigma(#{'@' => Body, '_' => Head})]).
+   Env = lists:foldl(
+      fun(X, Acc) -> 
+         maps:merge(Acc, maps:without(['@', '_'], X)) 
+      end, 
+      #{}, 
+      Body
+   ),
+   Seq = [X || #{'@' := X} <- Body],
+   datalog:horn(Head, [Mod:sigma(Env#{'@' => Seq, '_' => Head})]).
 
 
 
