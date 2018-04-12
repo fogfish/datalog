@@ -35,7 +35,7 @@
    p/1,
    c/1,
    c/2,
-   chorn/2
+   cflat/2
 ]).
 
 %%
@@ -257,9 +257,9 @@ cc_eval(Mod, Fun, Pat) ->
 
 %%
 %% compile native datalog horn as single function 
--spec chorn(atom(), datalog:q()) -> heap().
+-spec cflat(atom(), datalog:q()) -> heap().
 
-chorn(Mod, Datalog) ->
+cflat(Mod, Datalog) ->
    {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
    Env = lists:foldl(
       fun(X, Acc) -> 
@@ -268,7 +268,7 @@ chorn(Mod, Datalog) ->
       #{}, 
       Body
    ),
-   Seq = [X || #{'@' := X} <- Body],
+   Seq = [maps:with(['@', '_'], X) || X <- Body],
    datalog:horn(Head, [Mod:sigma(Env#{'@' => Seq, '_' => Head})]).
 
 
