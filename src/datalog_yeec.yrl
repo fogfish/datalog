@@ -16,18 +16,20 @@
 %% @doc
 %%   datalog
 
-Nonterminals   CLAUSES HORN BODY ITEM GUARD TERMS LITS.
-Terminals      ':-' '(' ')' '.' ',' '<' '=' '>' '!' '_' lit symbol.
+Nonterminals   CLAUSES GOAL HORN BODY ITEM GUARD TERMS LITS.
+Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' '_' lit symbol.
 Rootsymbol     CLAUSES.
 
 
-%% DATALOG -> '?-' symbol '(' TERMS ')' '.' CLAUSES :
-%%   {unwrap('$2'), '$4', '$7'}.
-
+CLAUSES -> GOAL CLAUSES :
+   ['$1' | '$2'].
 CLAUSES -> HORN CLAUSES :
    ['$1' | '$2'].
 CLAUSES -> '$empty' :
    [].
+
+GOAL -> '?-' symbol '(' TERMS ')' '.' :
+   {unwrap('$2'), '$4'}.
 
 HORN -> symbol '(' TERMS ')' ':-' BODY '.' :
    {unwrap('$1'), '$3', '$6'}.

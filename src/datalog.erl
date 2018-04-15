@@ -33,6 +33,7 @@
 %% compiler interface
 -export([
    p/1,
+   pflat/1,
    c/1,
    c/2,
    cflat/2
@@ -211,12 +212,19 @@ list(Pattern) ->
 %%
 %% parse datalog to native format
 -spec p(string()) -> datalog:q().
+-spec pflat(string()) -> datalog:q().
 
 p(Datalog) ->
+   p(Datalog, fun datalog_q:native/1).
+
+pflat(Datalog) ->
+   p(Datalog, fun datalog_q:native_flat/1).
+
+p(Datalog, Compiler) ->
    try
       {ok, Lex, _} = datalog_leex:string(Datalog), 
       {ok, Req}    = datalog_yeec:parse(Lex),
-      datalog_q:native(Req)
+      Compiler(Req)
    catch
    _:{badmatch, {error, {_, rds_parser, Reason}}} ->
       {error, Reason}; 
@@ -259,8 +267,12 @@ cc_eval(Mod, Fun, Pat) ->
 %% compile native datalog horn as single function 
 -spec cflat(atom(), datalog:q()) -> heap().
 
-cflat(Mod, Datalog) ->
-   {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
+cflat(Mod, [#{'_' := Head} | Body]) ->
+   datalog:horn(Head,
+      [cc_flat(Mod, Pat) || Pat <- Body]
+   ).
+
+cc_flat(Mod, [Head | Body]) ->
    Env = lists:foldl(
       fun(X, Acc) -> 
          maps:merge(Acc, maps:without(['@', '_'], X)) 
