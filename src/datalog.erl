@@ -281,7 +281,7 @@ cc_flat(Mod, [Head | Body]) ->
       Body
    ),
    Seq = [maps:with(['@', '_'], X) || X <- Body],
-   datalog:horn(Head, [Mod:sigma(Env#{'@' => Seq, '_' => Head})]).
+   Mod:sigma(Env#{'@' => Seq, '_' => Head}).
 
 
 
