@@ -26,7 +26,6 @@
 
 
 p(Head, A) ->
-   io:format("==> ~p~n", [Head]),
    fun(List) ->
       [identity ||
          stream:build(List),
@@ -37,7 +36,6 @@ p(Head, A) ->
    end.
 
 p(Head, A, B) ->
-   io:format("==> ~p~n", [Head]),
    fun(List) ->
       [identity ||
          stream:build(List),

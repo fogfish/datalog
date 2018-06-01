@@ -40,7 +40,7 @@ unfold({_, _, ?stream()}) ->
 unfold({Predicate, Env, Stream}) ->
    Head = stream:head(Stream),
    Tail = stream:tail(Stream),
-   unfold({Predicate, Env, (build(maps:merge(Head, Predicate)))(Env), Head, Tail});
+   unfold({Predicate, Env, (build(maps:merge(Predicate, Head)))(Env), Head, Tail});
 
 unfold({Predicate, Env, ?stream(), Head, Tail}) ->
    unfold({Predicate, Env, Tail});
