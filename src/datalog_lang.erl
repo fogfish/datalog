@@ -28,7 +28,6 @@
 %% scalable bloom filter definition
 -define(SBF, sbf:new(128, 0.0001)).
 
-
 %%
 %% a predicate ensures unique terms within the stream
 -spec unique(datalog:predicate()) -> _.

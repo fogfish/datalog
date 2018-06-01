@@ -50,7 +50,7 @@
 %% sigma function utility 
 -export([
    bind/2,
-   filter/2,
+   filter/1,
    takewhile/2
 ]).
 
@@ -176,10 +176,10 @@ bind(Heap, Pattern) ->
 
 %%
 %% in-line stream filter(s) using predicate term and pattern 
--spec filter(_, pattern()) -> fun( (_, datum:stream()) -> datum:stream() ).
+-spec filter(pattern()) -> fun( (_, datum:stream()) -> datum:stream() ).
 
-filter(X, Pattern) -> 
-   datalog_sigma:filter(fun stream:filter/2, X, Pattern).
+filter(Pattern) -> 
+   datalog_sigma:filter(fun stream:filter/2, Pattern).
 
 %%
 %% in-line stream filter(s) using predicate term and pattern 

@@ -16,64 +16,105 @@
 %% @doc
 %%   reference implementation
 -module(datalog_list).
+-compile({parse_transform, category}).
 
 -export([
-   sigma/1
+   p/2,
+   p/3
+   % sigma/1
 ]).
+
+
+p(Head, A) ->
+   io:format("==> ~p~n", [Head]),
+   fun(List) ->
+      [identity ||
+         stream:build(List),
+         nary(1, _),
+         filter(1, A, _),
+         head(Head, _)
+      ]
+   end.
+
+p(Head, A, B) ->
+   io:format("==> ~p~n", [Head]),
+   fun(List) ->
+      [identity ||
+         stream:build(List),
+         nary(2, _),
+         filter(1, A, _),
+         filter(2, B, _),
+         head(Head, _)
+      ]
+   end.
+
+%%
+%%
+nary(N, Stream) ->
+   stream:filter(fun(X) -> is_tuple(X) andalso size(X) =:= N end, Stream).
+
+%%
+%%
+
+
+filter(I, Filter, Stream) ->
+   Fun  = datalog:filter(Filter),
+   Fun(fun(X) -> erlang:element(I, X) end, Stream).
+
 
 %%
 %% sigma function, returns `datalog:pattern()` evaluator for lists
--spec sigma( datalog:pattern() ) -> datalog:heap().
+% -spec sigma( datalog:pattern() ) -> datalog:heap().
 
-sigma(Expr) ->
-   fun(X) ->
-      fun(Stream) ->
-         stream(X, stream:head(Stream), Expr)
-      end
-   end.
+% sigma(Expr) ->
+%    fun(X) ->
+%       fun(Stream) ->
+%          stream(X, stream:head(Stream), Expr)
+%       end
+%    end.
 
 
-stream(X, Heap, #{'_' := Head} = Expr) ->
-   %
-   % 3. output stream contains tuples with named values corresponding 
-   % to head definition. The head function normalize stream of 
-   % matched tuples and bind variables to values extracted from ground fact.
-   head(Head,
-      %
-      % 2. let's filter stream of tuples to match the pattern.
-      % The pattern is already re-written, all bound variables are defined 
-      filter(Head, datalog:bind(Heap, Expr), 
-         %  
-         % 1. the arity of head element define super set of tuples that 
-         % are matching the pattern. Let's build a stream of tuples 
-         % from list that satisfy given arity.
-         build(length(Head), X)
-      )
-   ).
+% stream(X, Heap, #{'_' := Head} = Expr) ->
+%    %
+%    % 3. output stream contains tuples with named values corresponding 
+%    % to head definition. The head function normalize stream of 
+%    % matched tuples and bind variables to values extracted from ground fact.
+%    head(Head,
+%       %
+%       % 2. let's filter stream of tuples to match the pattern.
+%       % The pattern is already re-written, all bound variables are defined 
+%       filter(Head, datalog:bind(Heap, Expr), 
+%          %  
+%          % 1. the arity of head element define super set of tuples that 
+%          % are matching the pattern. Let's build a stream of tuples 
+%          % from list that satisfy given arity.
+%          build(length(Head), X)
+%       )
+%    ).
 
 
 %%
 %% build stream of tuples from list
-build(Nary, List) ->
-   stream:filter(
-      fun(X) -> 
-         is_tuple(X) andalso size(X) =:= Nary
-      end,
-      stream:build(List)
-   ).
+% build(Nary, List) ->
+%    stream:filter(
+%       fun(X) -> 
+%          is_tuple(X) andalso size(X) =:= Nary
+%       end,
+%       stream:build(List)
+%    ).
 
 %%
 %% build a stream filter for each bound variable or guard
-filter(Head, Heap, Stream) ->
-   filter(1, Head, Heap, Stream).
+% filter(Head, Heap, Stream) ->
+%    filter(1, Head, Heap, Stream).
 
-filter(I, [H|T], Heap, Stream0) ->
-   Filter  = datalog:filter(H, Heap),
-   Stream1 = Filter(fun(X) -> erlang:element(I, X) end, Stream0),
-   filter(I + 1, T, Heap, Stream1);
+% filter(I, [H|T], Heap, Stream0) ->
+%    Filter  = datalog:filter(H, Heap),
+%    Stream1 = Filter(fun(X) -> erlang:element(I, X) end, Stream0),
+%    filter(I + 1, T, Heap, Stream1);
 
-filter(_, [], _, Stream) ->
-   Stream.
+% filter(_, [], _, Stream) ->
+%    Stream.
 
 
 %%

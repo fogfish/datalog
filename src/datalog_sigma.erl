@@ -17,10 +17,57 @@
 %%   datalog sigma helper
 -module(datalog_sigma).
 
+-include_lib("datum/include/datum.hrl").
+
 -export([
+   stream/1,
    bind/2,
-   filter/3
+   filter/2
 ]).
+
+stream(Predicate) ->
+   fun(Env) ->
+      fun(Stream) ->
+         stream:unfold(fun unfold/1, {Predicate, Env, Stream})
+      end
+   end.
+
+%%
+%% 
+unfold({_, _, ?stream()}) ->
+   stream:new();
+
+unfold({Predicate, Env, Stream}) ->
+   Head = stream:head(Stream),
+   Tail = stream:tail(Stream),
+   unfold({Predicate, Env, (build(maps:merge(Head, Predicate)))(Env), Head, Tail});
+
+unfold({Predicate, Env, ?stream(), Head, Tail}) ->
+   unfold({Predicate, Env, Tail});
+
+unfold({Predicate, Env, Stream, Head, Tail}) ->
+   {
+      maps:merge(stream:head(Stream), Head),
+      {Predicate, Env, stream:tail(Stream), Head, Tail}
+   }.
+
+
+%%
+%% build a "tuple" stream using stream generator
+build(#{'@' := Gen, '_' := Head = [A]} = Predicate) ->
+   Gen(Head, term(A, Predicate));
+build(#{'@' := Gen, '_' := Head = [A, B]} = Predicate) ->
+   Gen(Head, term(A, Predicate), term(B, Predicate));
+build(#{'@' := Gen, '_' := Head = [A, B, C]} = Predicate) ->
+   Gen(Head, term(A, Predicate), term(B, Predicate), term(C, Predicate));
+build(#{'@' := Gen, '_' := Head = [A, B, C, D]} = Predicate) ->
+   Gen(Head, term(A, Predicate), term(B, Predicate), term(C, Predicate), term(D, Predicate)).
+
+term(T, Predicate) ->
+   case Predicate of
+      #{T := Value} -> Value;
+      _             -> '_'
+   end.
 
 %%
 %% bind pattern with resolved variable from heap
@@ -35,31 +82,27 @@ bind(Heap, Pattern) ->
 
 %%
 %% build an in-line stream filter using predicate term and pattern  
--spec filter(_, _, datalog:pattern()) -> _.
+-spec filter(_, datalog:pattern()) -> _.
 
-filter(With, Term, Pattern) ->
-   case filter_spec(Term, Pattern) of
+filter(With, Pattern) ->
+   case filter_spec(Pattern) of
       undefined ->
          fun(_, Stream) -> Stream end;
       Filters ->
          filter_fold(With, Filters)
    end.
 
-filter_spec(Term, Pattern)
- when is_atom(Term) ->
-   % the term is variable: p(..., X, ...), X > 5
-   case Pattern of
-      #{Term := Filter} when is_list(Filter) ->
-         Filter;
-      #{Term := Filter} ->
-         [{'=:=', Filter}];
-      _ ->
-         undefined
-   end;
+filter_spec('_') ->
+   undefined;
 
-filter_spec(Term, _Pattern) ->
+filter_spec(Pattern)
+ when is_list(Pattern) ->
+   % the term is variable: p(..., X, ...), X > 5
+   Pattern;
+
+filter_spec(Pattern) ->
    % the term is in-line value
-   [{'=:=', Term}].
+   [{'=:=', Pattern}].
 
 filter_fold(With, Filters) ->
    fun(Lens, Stream) ->
