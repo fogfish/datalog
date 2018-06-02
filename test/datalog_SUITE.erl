@@ -11,7 +11,10 @@
    unary_le_2/1,
    unary_gt_2/1,
    unary_ge_2/1,
-   unary_ne_2/1
+   unary_ne_2/1,
+
+   binary_product/1,
+   binary_join/1
 ]).
 
 all() ->
@@ -23,7 +26,10 @@ all() ->
       unary_le_2,
       unary_gt_2,
       unary_ge_2,
-      unary_ne_2
+      unary_ne_2,
+
+      binary_product,
+      binary_join
    ].
 
 datalog(Datalog, Fixture, Expect) ->
@@ -89,4 +95,19 @@ unary_ne_2(_) ->
       "h(a) :- p(a), a != 2.",
       datalog_FIXTURE:unary(),
       datalog_FIXTURE:unary_ne_2()
+   ).
+
+
+binary_product(_) ->
+   datalog(
+      "h(a,b) :- p(a, x), p(b, y).",
+      datalog_FIXTURE:binary(),
+      datalog_FIXTURE:binary_product()
+   ).
+
+binary_join(_) ->
+   datalog(
+      "h(a,b) :- p(a, x), p(x, b).",
+      datalog_FIXTURE:binary(),
+      datalog_FIXTURE:binary_join()
    ).
