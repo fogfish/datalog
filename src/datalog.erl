@@ -167,5 +167,24 @@ cc(#{'@' := Gen, '_' := Head} = Predicate, Source, Datalog) ->
          N = length(Head),
          datalog_sigma:stream(maps:put('@', fun Source:Gen/N, Predicate));
       Horn ->
-         cc_horn(Horn, Source, Datalog)
+         cc_horn(cc_carry_guards(Horn, Predicate), Source, Datalog)
    end.
+
+%%
+%% current horn clause applies "filters" to projection
+%% this filters needs to be lifted to sigma function
+cc_carry_guards([Head | Body], #{'_' := Literal} = Predicate) ->
+   %% a(x,y) :- ...
+   %%   ...  :- ... a(x,"Test") ...
+   Lits = maps:from_list(
+      lists:filter(
+         fun({_, X}) -> not is_atom(X) end, 
+         lists:zip(Head, Literal)
+      )
+   ),
+   %% a(x,y) :- ...
+   %%   ...  :- ... a(x,y) ... y = "Test"
+   Grds = maps:with(Head, Predicate),
+   Pred = maps:merge(Grds, Lits), 
+   [Head | [maps:merge(Pred, X) || X <- Body]].
+
