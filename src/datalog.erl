@@ -24,6 +24,8 @@
 %%
 %% datalog interface
 -export([
+   sigma/2,
+   sigma/3,
    horn/2, 
    q/2, 
    q/3
@@ -93,13 +95,23 @@
 %%%----------------------------------------------------------------------------
 
 %%
+%% 
+sigma(Head, Gen) ->
+   sigma(Head, #{}, Gen).
+
+sigma(Head, Filters, Gen) ->
+   datalog_sigma:stream(Filters#{'@' => Gen, '_' => Head}).
+
+%%
 %% build horn clause evaluator
 -spec horn(head(), body()) -> heap().
 
 horn(Head, Body) ->
-   fun(X) ->
-      datalog_horn:stream(Head, [Fun(X) || Fun <- Body])
-   end.
+   datalog_horn:stream(Head, Body).
+
+   % fun(X) ->
+   %    datalog_horn:stream(Head, [Fun(X) || Fun <- Body])
+   % end.
 
 %%
 %% build datalog query evaluator

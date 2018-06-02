@@ -19,30 +19,30 @@
 -compile({parse_transform, category}).
 
 -export([
-   p/2,
-   p/3
+   p/1,
+   p/2
    % sigma/1
 ]).
 
 
-p(Head, A) ->
+p(A) ->
    fun(List) ->
       [identity ||
          stream:build(List),
          nary(1, _),
          filter(1, A, _),
-         head(Head, _)
+         stream:map(fun erlang:tuple_to_list/1, _)
       ]
    end.
 
-p(Head, A, B) ->
+p(A, B) ->
    fun(List) ->
       [identity ||
          stream:build(List),
          nary(2, _),
          filter(1, A, _),
          filter(2, B, _),
-         head(Head, _)
+         stream:map(fun erlang:tuple_to_list/1, _)
       ]
    end.
 
@@ -115,20 +115,20 @@ filter(I, Filter, Stream) ->
 %    Stream.
 
 
-%%
-%% normalize stream and bind head variable to ground fact value(s)
-head(Head, Stream) ->
-   stream:map(
-      fun(X) ->
-         % The library uses `map()` as data structure for tuples.
-         % It allows efficiently bind deducted values to head variable.
-         % Each sigma function return stream of maps.
-         maps:from_list( 
-            lists:filter(
-               fun({Key, _}) -> is_atom(Key) end,
-               lists:zip(Head, tuple_to_list(X))
-            )
-         )
-      end,
-      Stream
-   ).
+% %%
+% %% normalize stream and bind head variable to ground fact value(s)
+% head(Head, Stream) ->
+%    stream:map(
+%       fun(X) ->
+%          % The library uses `map()` as data structure for tuples.
+%          % It allows efficiently bind deducted values to head variable.
+%          % Each sigma function return stream of maps.
+%          maps:from_list( 
+%             lists:filter(
+%                fun({Key, _}) -> is_atom(Key) end,
+%                lists:zip(Head, tuple_to_list(X))
+%             )
+%          )
+%       end,
+%       Stream
+%    ).

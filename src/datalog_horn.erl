@@ -24,14 +24,23 @@
 
 %%
 %%
-stream([Head | Horn0], Program) ->
-   Horn1 = [maps:put('@', maps:get(Gen, Program), Predicate) || #{'@' := Gen} = Predicate <- Horn0],
+stream(Head, Horn) ->
    fun(Env) ->
-      Horn2 = [(datalog_sigma:stream(Predicate))(Env) || Predicate <- Horn1],
+      Rule = [Fun(Env) || Fun <- Horn],
       fun(Stream) ->
-         head(Head, join(Stream, Horn2))
+         head(Head, join(Stream, Rule))
       end
    end.
+
+
+% stream([Head | Horn0], Program) ->
+%    Horn1 = [maps:put('@', maps:get(Gen, Program), Predicate) || #{'@' := Gen} = Predicate <- Horn0],
+%    fun(Env) ->
+%       Horn2 = [(datalog_sigma:stream(Predicate))(Env) || Predicate <- Horn1],
+%       fun(Stream) ->
+%          head(Head, join(Stream, Horn2))
+%       end
+%    end.
 
 join(?stream(), _) ->
    stream:new();

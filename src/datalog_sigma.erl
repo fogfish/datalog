@@ -37,12 +37,13 @@ stream(Predicate) ->
 unfold({_, _, ?stream()}) ->
    stream:new();
 
-unfold({Predicate, Env, Stream}) ->
-   Head = stream:head(Stream),
-   Tail = stream:tail(Stream),
-   unfold({Predicate, Env, (build(maps:merge(Predicate, Head)))(Env), Head, Tail});
+unfold({#{'_' := H} = Predicate, Env, Stream}) ->
+   Head  = stream:head(Stream),
+   Tail  = stream:tail(Stream),
+   Sigma = head(H, (build(maps:merge(Predicate, Head)))(Env)),
+   unfold({Predicate, Env, Sigma, Head, Tail});
 
-unfold({Predicate, Env, ?stream(), Head, Tail}) ->
+unfold({Predicate, Env, ?stream(), _Head, Tail}) ->
    unfold({Predicate, Env, Tail});
 
 unfold({Predicate, Env, Stream, Head, Tail}) ->
@@ -54,20 +55,37 @@ unfold({Predicate, Env, Stream, Head, Tail}) ->
 
 %%
 %% build a "tuple" stream using stream generator
-build(#{'@' := Gen, '_' := Head = [A]} = Predicate) ->
-   Gen(Head, term(A, Predicate));
-build(#{'@' := Gen, '_' := Head = [A, B]} = Predicate) ->
-   Gen(Head, term(A, Predicate), term(B, Predicate));
-build(#{'@' := Gen, '_' := Head = [A, B, C]} = Predicate) ->
-   Gen(Head, term(A, Predicate), term(B, Predicate), term(C, Predicate));
-build(#{'@' := Gen, '_' := Head = [A, B, C, D]} = Predicate) ->
-   Gen(Head, term(A, Predicate), term(B, Predicate), term(C, Predicate), term(D, Predicate)).
+build(#{'@' := Gen, '_' := [A]} = Predicate) ->
+   Gen(term(A, Predicate));
+build(#{'@' := Gen, '_' := [A, B]} = Predicate) ->
+   Gen(term(A, Predicate), term(B, Predicate));
+build(#{'@' := Gen, '_' := [A, B, C]} = Predicate) ->
+   Gen(term(A, Predicate), term(B, Predicate), term(C, Predicate));
+build(#{'@' := Gen, '_' := [A, B, C, D]} = Predicate) ->
+   Gen(term(A, Predicate), term(B, Predicate), term(C, Predicate), term(D, Predicate)).
 
 term(T, Predicate) ->
    case Predicate of
       #{T := Value} -> Value;
       _             -> '_'
    end.
+
+
+%%
+%% normalize stream and bind head variable to ground fact value(s)
+%% The library uses `map()` as data structure for tuples.
+%% It allows efficiently bind deducted values to head variable.
+%% Each sigma function return stream of tuples.
+head(Head, Stream) ->
+   stream:map(
+      fun(Tuple) ->
+         maps:from_list( lists:zip(Head, Tuple) )
+      end,
+      Stream
+   ).
+
+
+
 
 %%
 %% bind pattern with resolved variable from heap
