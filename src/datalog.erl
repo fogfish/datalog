@@ -16,7 +16,6 @@
 %% @doc
 %%   datalog evaluator
 -module(datalog).
--include("datalog.hrl").
 
 %%
 %% datalog interface
