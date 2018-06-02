@@ -55,21 +55,23 @@ unfold({Predicate, Env, Stream, Head, Tail}) ->
 
 %%
 %% build a "tuple" stream using stream generator
-build(#{'@' := Gen, '_' := [A]} = Predicate) ->
-   Gen(term(A, Predicate));
-build(#{'@' := Gen, '_' := [A, B]} = Predicate) ->
-   Gen(term(A, Predicate), term(B, Predicate));
-build(#{'@' := Gen, '_' := [A, B, C]} = Predicate) ->
-   Gen(term(A, Predicate), term(B, Predicate), term(C, Predicate));
-build(#{'@' := Gen, '_' := [A, B, C, D]} = Predicate) ->
-   Gen(term(A, Predicate), term(B, Predicate), term(C, Predicate), term(D, Predicate)).
+build(#{'@' := Gen, '_' := [X1]} = Predicate) ->
+   Gen(term(X1, Predicate));
+build(#{'@' := Gen, '_' := [X1, X2]} = Predicate) ->
+   Gen(term(X1, Predicate), term(X2, Predicate));
+build(#{'@' := Gen, '_' := [X1, X2, X3]} = Predicate) ->
+   Gen(term(X1, Predicate), term(X2, Predicate), term(X3, Predicate));
+build(#{'@' := Gen, '_' := [X1, X2, X3, X4]} = Predicate) ->
+   Gen(term(X1, Predicate), term(X2, Predicate), term(X3, Predicate), term(X4, Predicate)).
 
-term(T, Predicate) ->
+term(T, Predicate)
+ when is_atom(T) ->
    case Predicate of
       #{T := Value} -> Value;
       _             -> '_'
-   end.
-
+   end;
+term(T, _) ->
+   T.
 
 %%
 %% normalize stream and bind head variable to ground fact value(s)

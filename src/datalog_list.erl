@@ -20,44 +20,84 @@
 
 -export([
    p/1,
-   p/2
-   % sigma/1
+   p/2,
+   p/3,
+   p/4,
+   p/5
 ]).
 
 
-p(A) ->
+p(X1) ->
    fun(List) ->
       [identity ||
          stream:build(List),
          nary(1, _),
-         filter(1, A, _),
+         filter(1, X1, _),
          stream:map(fun erlang:tuple_to_list/1, _)
       ]
    end.
 
-p(A, B) ->
+p(X1, X2) ->
    fun(List) ->
       [identity ||
          stream:build(List),
          nary(2, _),
-         filter(1, A, _),
-         filter(2, B, _),
+         filter(1, X1, _),
+         filter(2, X2, _),
          stream:map(fun erlang:tuple_to_list/1, _)
       ]
    end.
+
+p(X1, X2, X3) ->
+   fun(List) ->
+      [identity ||
+         stream:build(List),
+         nary(2, _),
+         filter(1, X1, _),
+         filter(2, X2, _),
+         filter(3, X3, _),
+         stream:map(fun erlang:tuple_to_list/1, _)
+      ]
+   end.
+
+p(X1, X2, X3, X4) ->
+   fun(List) ->
+      [identity ||
+         stream:build(List),
+         nary(2, _),
+         filter(1, X1, _),
+         filter(2, X2, _),
+         filter(3, X3, _),
+         filter(4, X4, _),
+         stream:map(fun erlang:tuple_to_list/1, _)
+      ]
+   end.
+
+p(X1, X2, X3, X4, X5) ->
+   fun(List) ->
+      [identity ||
+         stream:build(List),
+         nary(2, _),
+         filter(1, X1, _),
+         filter(2, X2, _),
+         filter(3, X3, _),
+         filter(4, X4, _),
+         filter(5, X5, _),
+         stream:map(fun erlang:tuple_to_list/1, _)
+      ]
+   end.
+
 
 %%
 %%
 nary(N, Stream) ->
    stream:filter(fun(X) -> is_tuple(X) andalso size(X) =:= N end, Stream).
 
-%%
-%%
-
-
 filter(I, Filter, Stream) ->
    Fun  = datalog:filter(Filter),
    Fun(fun(X) -> erlang:element(I, X) end, Stream).
+
+
 
 
 %%

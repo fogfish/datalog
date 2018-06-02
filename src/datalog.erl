@@ -35,10 +35,10 @@
 %% compiler interface
 -export([
    p/1,
-   pflat/1,
-   c/1,
+   % pflat/1,
    c/2,
-   cflat/2
+   c/3 %,
+   % cflat/2
 ]).
 
 %%
@@ -113,11 +113,11 @@ horn(Head, Body) ->
 -spec q(_, _) -> eval().
 -spec q(_, _, _) -> eval().
 
-q(Expr, X) ->
-   ( Expr(X) )(stream:new(#{})).   
+q(Expr, Env) ->
+   ( Expr(Env) )(stream:new(#{})).   
 
-q(Expr, Heap, X) ->
-   ( Expr(X) )(stream:new(Heap)).   
+q(Expr, Heap, Env) ->
+   ( Expr(Env) )(stream:new(Heap)).   
 
 %%%----------------------------------------------------------------------------
 %%%
@@ -219,13 +219,13 @@ list(Pattern) ->
 %%
 %% parse datalog to native format
 -spec p(string()) -> datalog:q().
--spec pflat(string()) -> datalog:q().
+% -spec pflat(string()) -> datalog:q().
 
 p(Datalog) ->
    p(Datalog, fun datalog_q:native/1).
 
-pflat(Datalog) ->
-   p(Datalog, fun datalog_q:native_flat/1).
+% pflat(Datalog) ->
+%    p(Datalog, fun datalog_q:native_flat/1).
 
 p(Datalog, Compiler) ->
    try
@@ -243,17 +243,22 @@ p(Datalog, Compiler) ->
 
 %%
 %% compile native datalog to evaluator function 
--spec c(datalog:q()) -> heap().
+% -spec c(datalog:q()) -> heap().
 
-c(Datalog) ->
-   c(a, Datalog).
+c(Source, Datalog) ->
+   c(a, Source, Datalog).
 
-c(Goal, Datalog) ->
+c(Goal, Source, Datalog) ->
    [Head | Body] = maps:get(Goal, Datalog),
-   datalog:horn(Head, [cc(Predicate, Datalog) || Predicate <- Body]).   
+   datalog:horn(Head, [cc(Predicate, Source) || Predicate <- Body]).   
 
-cc(#{'@' := Gen} = Predicate, Datalog) ->
-   datalog_sigma:stream(maps:put('@', maps:get(Gen, Datalog), Predicate)).
+cc(#{'@' := {datalog, Fun}, '_' := Head} = Predicate, _) ->
+   datalog_lang:Fun(Predicate);
+   % datalog_sigma:stream(maps:put('@', fun Mod:Fun/N, Predicate));
+
+cc(#{'@' := Gen, '_' := Head} = Predicate, Source) ->
+   N = length(Head),
+   datalog_sigma:stream(maps:put('@', fun Source:Gen/N, Predicate)).
 
    % {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
 
@@ -294,24 +299,20 @@ cc(#{'@' := Gen} = Predicate, Datalog) ->
 
 %%
 %% compile native datalog horn as single function 
--spec cflat(atom(), datalog:q()) -> heap().
+% -spec cflat(atom(), datalog:q()) -> heap().
 
-cflat(Mod, [#{'_' := Head} | Body]) ->
-   datalog:horn(Head,
-      [cc_flat(Mod, Pat) || Pat <- Body]
-   ).
+% cflat(Mod, [#{'_' := Head} | Body]) ->
+%    datalog:horn(Head,
+%       [cc_flat(Mod, Pat) || Pat <- Body]
+%    ).
 
-cc_flat(Mod, [Head | Body]) ->
-   Env = lists:foldl(
-      fun(X, Acc) -> 
-         maps:merge(Acc, maps:without(['@', '_'], X)) 
-      end, 
-      #{}, 
-      Body
-   ),
-   Seq = [maps:with(['@', '_'], X) || X <- Body],
-   Mod:sigma(Env#{'@' => Seq, '_' => Head}).
-
-
-
-
+% cc_flat(Mod, [Head | Body]) ->
+%    Env = lists:foldl(
+%       fun(X, Acc) -> 
+%          maps:merge(Acc, maps:without(['@', '_'], X)) 
+%       end, 
+%       #{}, 
+%       Body
+%    ),
+%    Seq = [maps:with(['@', '_'], X) || X <- Body],
+%    Mod:sigma(Env#{'@' => Seq, '_' => Head}).

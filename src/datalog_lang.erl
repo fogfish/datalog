@@ -91,7 +91,8 @@ flatten({[H|T], Term, Stream}) ->
 eq(#{'_' := [A, B]}) ->
    fun(_) ->
       fun(Stream) ->
-         [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =:= Bx end, Stream)]
+         stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =:= Bx end, Stream)
+         % [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =:= Bx end, Stream)]
       end
    end.
 
