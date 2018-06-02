@@ -1,34 +1,56 @@
 # datalog
 
-The library implements an ad-hoc query engine using simplified version of general _logic programming_ paradigm. It is designed for applications that uses a large number of ground facts persisted in external storage. 
+The library is designed to formalize relation of n-ary streams. It implements an ad-hoc query engine using simplified version of general _logic programming_ paradigm.
 
 [![Build Status](https://secure.travis-ci.org/fogfish/datalog.svg?branch=master)](http://travis-ci.org/fogfish/datalog)
 
-## background
+## Key features
 
-The logic program consists of finite set of rules and large volume of ground facts -- knowledge. The rules are used to deduce new facts from other facts. The [Horn clauses](https://en.wikipedia.org/wiki/Horn_clause) formally defines rules (first-order formula)
+* top-down, breath-first evaluation algorithm of logical program
+* Erlang native interface to describe relation of streams
+* Datalog query engine to formalize streams relation using human readable language
+
+### Background
+
+The logic program consists of finite set of rules and large volume of ground facts -- knowledge. The rules are used to deduce new facts from other facts (built new relations). The [Horn clauses](https://en.wikipedia.org/wiki/Horn_clause) formally defines rules (first-order formula)
 
 ```
 L0 :- L1, ..., Ln
 ```
 
-`L0` is a rule head, it is a producer of new facts deducted by body expression. The body is a conjunction of statement, built-in functions and filters. Each `Li` consist of predicate symbol and terms such as `p(t1, ..., tk)`. A term is either a constant or a variable. The head is a derived relation, deducted through the _logical program_ and ground facts. It is not explicitly persisted anywhere and corresponds the relation view (projection). The materialization of these view is the main task of this library. Body predicates refers either to derived relations or ground facts. Ground facts are physically stored in external memory -- the library assumes that each predicated corresponds to exactly one persistent relation such that each ground fact `p(t1, ..., tk)` is retrieved as a tuple `(t1, ..., tk)`. The predicates with common variables give rise to join. 
+`L0` is a rule head, it is a producer of new relation (facts). The body is a conjunction of existed relations, built-in functions and filters. Each `Li` is a predicate expression consist of predicate symbol and terms such as `p(t1, ..., tk)`, terms are either a literal constant or a variable. The predicate expression refers to relation of arbitrary arity - stream of tuples; terms range over the stream of tuples. Body predicates refers either to derived relations or ground facts. The predicates with common variables give rise to join. Ground facts are physically stored in external memory and accesses using streams i/o technique.
 
+A head is a new derived relation, deducted through the _logical program_ (body of horn clause) and ground facts. It is not explicitly persisted anywhere and corresponds the relation view (projection). The materialization of these view is the main task of this library.
 
-The library uses a "functional" interpretation of predicates, any predicate is a function -- sigma expression. It associates some of its bound arguments to the remaining ones, returning the lazy set of tuples corresponding to materialized predicate. For example if p is binary predicate, its σ function is denoted as
+A naive example, a new relation `about` is deducted from two relations `category` and `article`.
+```
+about(title, subject) :- category(x, subject), article(title, x).
+```
+
+### σ function
+
+The library uses a "functional" interpretation of predicates, any predicate is a function -- sigma expression. It associates some of its bound terms to the remaining ones, returning the lazy set of tuples corresponding to materialized predicate. For example if p is binary predicate, its σ function is denoted as
 
 ```
 σ(S) -> { y | x ∈ S ^ p(x, y) }
 ```
 
-The interpreter translate goals of rules into algebraic queries with an objective to access the minimum of ground facts needed in order to determine the answer. Rules are a compiled to composition of σ functions (sub-queries). They are recursively expanded and the evaluation of the current sub-query is postponed until the new sub-query has been completely solved, see [horn evaluator](src/datalog_horn.erl). 
+The library translate goals of rules into algebraic queries with an objective to access the minimum of ground facts needed in order to determine the answer. Rules are a compiled to composition of σ functions (sub-queries). They are recursively expanded and the evaluation of the current sub-query is postponed until the new sub-query has been completely solved. 
 
 The defined sigma expression formalism translates purely declarative semantic into operational semantic, i.e. specify of query must be executed. The lazy set ensures simplicity of one-tuple-at-a-time evaluation strategy while preserving efficiency of set-oriented methods used by high-level query languages. 
 
+The sigma function is the formalism to relate logic program to ground facts persisted by external storage (most common query languages, access methodologies, i/o interfaces). The library uses sigma algebra to evaluate logic program but it requires developers to implement corresponding access protocols supported by external storage. This is an abstraction interface to retrieve ground facts _matching_ predicate. The library hides the concerns of logical program evaluation but provides hooks to implement access protocols.
 
-## σ function
 
-The sigma function is the formalism to relate logic program to ground facts persisted by external storage (most common query languages, access methodologies, i/o interfaces). This datalog library uses sigma algebra to evaluate logic program but it requires developers to implement corresponding sigma(s) (access protocols) supported by external storage. This is an abstraction interface to retrieve ground facts _matching_ predicate. The library hides the concerns of logical program evaluation but provides hooks to implement access protocols. The library uses a naive sigma function to access Erlang lists as [reference implementation](src/datalog_list.erl).
+
+## Getting started
+
+
+
+
+
+
+
 
 
 The type of σ function is defined as following. The `datalog:pattern()` and `datalog:heap()` carries the values of bound arguments so that sigma function return all tuples matching the pattern.
@@ -94,7 +116,7 @@ datalog:q(E, [{a, 1}, {b, 2}, {c, 3}]).
 
 ## Reference
 
-1. [What You Always Wanted to Know About Datalog (And Never Dared to Ask)](http://www.csd.uoc.gr/~hy562/1112_spring/instr_material/WhatYouAlwaysWantedtoKnowAboutDatalog_AndNeverDaredtoAsk.pdf)
+1. [What You Always Wanted to Know About Datalog (And Never Dared to Ask)](https://pdfs.semanticscholar.org/9374/f0da312f3ba77fa840071d68935a28cba364.pdf)
 1. [Theory of Relational Databases](http://www.cs.nott.ac.uk/~psznza/G53RDB07/rdb14.pdf)
 
 
