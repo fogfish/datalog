@@ -15,9 +15,6 @@
 %%
 %% @doc
 %%   datalog evaluator
-%%
-%% @todo 
-%%   * known limitation - support single horn clause only 
 -module(datalog).
 -include("datalog.hrl").
 
@@ -27,38 +24,13 @@
    sigma/2,
    sigma/3,
    horn/2, 
-   q/2, 
-   q/3
-]).
-
-%%
-%% compiler interface
--export([
+   q/2,
+   q/3,
    p/1,
-   % pflat/1,
    c/2,
-   c/3 %,
-   % cflat/2
-]).
-
-%%
-%% datalog built-in predicates
--export([
-   unique/1, flat/1,
-   eq/1, ne/1, lt/1, gt/1, le/1, ge/1
-]).
-
-%%
-%% sigma function utility 
--export([
+   c/3,
    filter/1,
    takewhile/2
-]).
-
-%%
-%% build-in data types
--export([
-   list/1
 ]).
 
 -export_type([q/0, eval/0, heap/0, predicate/0]).
@@ -106,7 +78,6 @@ sigma(Head, Filters, Gen) ->
 horn(Head, Body) ->
    datalog_horn:stream(Head, Body).
 
-
 %%
 %% build datalog query evaluator
 -spec q(_, _) -> eval().
@@ -117,55 +88,6 @@ q(Expr, Env) ->
 
 q(Expr, Heap, Env) ->
    ( Expr(Env) )(stream:new(Heap)).   
-
-%%%----------------------------------------------------------------------------
-%%%
-%%% build-in predicates
-%%%
-%%%----------------------------------------------------------------------------
-
-%%
-%% a predicate ensures unique terms within the stream
-%% ```
-%% h(x,z) :- a(x,y), b(y,z), .unique(x,z). 
-%% ``` 
--spec unique(predicate()) -> _.
-
-unique(X) -> datalog_lang:unique(X).
-
--spec flat(predicate()) -> _.
-
-flat(X) -> datalog_lang:flat(X).
-
-%%
-%% comparison predicates
-%% ```
-%% h(x,z) :- a(x,y), b(y,z), .eq(x,z). 
-%% ``` 
--spec eq(predicate()) -> _.
-
-eq(X) -> datalog_lang:eq(X).
-
--spec ne(predicate()) -> _.
-
-ne(X) -> datalog_lang:ne(X).
-
--spec lt(predicate()) -> _.
-
-lt(X) -> datalog_lang:lt(X).
-
--spec gt(predicate()) -> _.
-
-gt(X) -> datalog_lang:gt(X).
-
--spec le(predicate()) -> _.
-
-le(X) -> datalog_lang:le(X).
-
--spec ge(predicate()) -> _.
-
-ge(X) -> datalog_lang:ge(X).
-
 
 %%%----------------------------------------------------------------------------
 %%%
@@ -186,20 +108,6 @@ filter(Pattern) ->
 
 takewhile(X, Pattern) -> 
    datalog_sigma:takewhile(fun stream:takewhile/2, X, Pattern).
-
-
-%%%----------------------------------------------------------------------------
-%%%
-%%% built-in evaluator
-%%%
-%%%----------------------------------------------------------------------------
-
-%%
-%% build list evaluator using pattern-match specification
--spec list(pattern()) -> eval().
-
-list(Pattern) ->
-   datalog_list:sigma(Pattern).
 
 
 %%%----------------------------------------------------------------------------
@@ -231,8 +139,6 @@ p(Datalog, Compiler) ->
 
 %%
 %% compile native datalog to evaluator function 
-% -spec c(datalog:q()) -> heap().
-
 c(Source, [{'?', #{'@' := Goal}} | Datalog]) ->
    c(Goal, Source, Datalog).
 
@@ -264,49 +170,3 @@ cc(#{'@' := Gen, '_' := Head} = Predicate, Source, Datalog) ->
       Horn ->
          cc_horn(Horn, Source, Datalog)
    end.
-
-
-% c(Datalog) ->
-%    c(datalog, Datalog).
-
-% c(Mod, Datalog) ->
-%    {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
-%    datalog:horn(Head,
-%       [cc(Mod, Pat) || Pat <- Body]
-%    ).
-
-% cc(_, #{'@' := {Mod, Fun}} = Pat) ->
-%    cc_eval(Mod, Fun, Pat);
-
-% cc(Mod, #{'@' := Fun} = Pat) ->
-%    cc_eval(Mod, Fun, Pat).
-
-% cc_eval(Mod, Fun, Pat) ->
-%    case 
-%       lists:keyfind(Fun, 1, Mod:module_info(exports))
-%    of
-%       {Fun, 1} ->
-%          Mod:Fun(Pat);
-%       _        ->
-%          Mod:sigma(Pat)
-%    end.
-
-%%
-%% compile native datalog horn as single function 
-% -spec cflat(atom(), datalog:q()) -> heap().
-
-% cflat(Mod, [#{'_' := Head} | Body]) ->
-%    datalog:horn(Head,
-%       [cc_flat(Mod, Pat) || Pat <- Body]
-%    ).
-
-% cc_flat(Mod, [Head | Body]) ->
-%    Env = lists:foldl(
-%       fun(X, Acc) -> 
-%          maps:merge(Acc, maps:without(['@', '_'], X)) 
-%       end, 
-%       #{}, 
-%       Body
-%    ),
-%    Seq = [maps:with(['@', '_'], X) || X <- Body],
-%    Mod:sigma(Env#{'@' => Seq, '_' => Head}).

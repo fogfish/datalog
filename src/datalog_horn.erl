@@ -16,8 +16,6 @@
 %% @doc
 %%   horn clause evaluator
 -module(datalog_horn).
-
--include("datalog.hrl").
 -include_lib("datum/include/datum.hrl").
 
 -export([stream/2]).

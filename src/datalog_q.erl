@@ -20,8 +20,7 @@
 -module(datalog_q).
 
 -export([
-   native/1 %,
-   % native_flat/1
+   native/1
 ]).
 
 %%
@@ -36,31 +35,13 @@ native(Horns) ->
          % into pattern so that sigma function can construct stream of ground facts.
          {Pattern, Filter} = lists:partition(fun(X) -> size(X) =:= 2 end, Body),
          [{Horn, [Head | ast_to_body(Pattern, Filter)]} | Datalog];
-         % maps:put(Horn, [Head | ast_to_body(Pattern, Filter)], Datalog);
 
       ({Horn, Head}, Datalog) ->
          [{'?', #{'@' => Horn, '_' => Head}} | Datalog]
-         % maps:put('?', #{'@' => Horn, '_' => Head}, Datalog)
       end,
-      % #{},
       [],
       Horns 
    ).
-
-%%
-%%
-% -spec native_flat([{_, _, _}]) -> datalog:q().
-
-% native_flat(Horns) ->
-%    lists:map(
-%       fun({Horn, Head, Body}) ->
-%          {Pattern, Filter} = lists:partition(fun(X) -> size(X) =:= 2 end, Body),
-%          [Head | ast_to_body(Pattern, Filter)];
-%       ({Horn, Head}) ->
-%          #{'_' => Head}
-%       end,
-%       Horns
-%    ).
 
 %%
 %%

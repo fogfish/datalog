@@ -20,7 +20,6 @@
 -include_lib("datum/include/datum.hrl").
 
 -export([
-   stream/2,
    unique/1, flat/1,
    eq/1, ne/1, lt/1, gt/1, le/1, ge/1
 ]).
@@ -29,23 +28,17 @@
 %% scalable bloom filter definition
 -define(SBF, sbf:new(128, 0.0001)).
 
-stream(Source, X) ->
-   io:format("==> ~p ~p~n", [Source, X]),
-   fun(_Env) ->
-      fun(Stream) ->
-         io:format("==> ~p~n", [Stream]),
-         Stream
-      end
-   end.
-
 %%
 %% a predicate ensures unique terms within the stream
+%% ```
+%% h(x,z) :- a(x,y), .unique(y), b(y,z) . 
+%% ``` 
 -spec unique(datalog:predicate()) -> _.
 
 unique(#{'_' := Head}) ->   
    fun(_) ->
       fun(Stream) ->
-         [pipe|stream:unfold(fun uniq/1, {?SBF, Head, Stream})]
+         stream:unfold(fun uniq/1, {?SBF, Head, Stream})
       end
    end.
 
@@ -68,7 +61,7 @@ uniq({Sbf0, Head, Stream}) ->
 flat(#{'_' := [Term]}) ->
    fun(_) ->
       fun(Stream) ->
-         [pipe|stream:unfold(fun flatten/1, {[], Term, Stream})]
+         stream:unfold(fun flatten/1, {[], Term, Stream})
       end
    end.
 
@@ -94,7 +87,7 @@ flatten({[H|T], Term, Stream}) ->
 %%
 %% comparison predicates
 %% ```
-%% h(x,z) :- a(x,y), b(y,z), :eq(x,z). 
+%% h(x,z) :- a(x,y), b(y,z), .eq(x,z). 
 %% ``` 
 -spec eq(datalog:predicate()) -> _.
 
@@ -102,7 +95,6 @@ eq(#{'_' := [A, B]}) ->
    fun(_) ->
       fun(Stream) ->
          stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =:= Bx end, Stream)
-         % [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =:= Bx end, Stream)]
       end
    end.
 
@@ -111,7 +103,7 @@ eq(#{'_' := [A, B]}) ->
 ne(#{'_' := [A, B]}) ->
    fun(_) ->
       fun(Stream) ->
-         [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =/= Bx end, Stream)]
+         stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =/= Bx end, Stream)
       end
    end.
 
@@ -120,7 +112,7 @@ ne(#{'_' := [A, B]}) ->
 lt(#{'_' := [A, B]}) ->
    fun(_) ->
       fun(Stream) ->
-         [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax < Bx end, Stream)]
+         stream:filter(fun(#{A := Ax, B := Bx}) -> Ax < Bx end, Stream)
       end
    end.
 
@@ -129,7 +121,7 @@ lt(#{'_' := [A, B]}) ->
 gt(#{'_' := [A, B]}) ->
    fun(_) ->
       fun(Stream) ->
-         [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax > Bx end, Stream)]
+         stream:filter(fun(#{A := Ax, B := Bx}) -> Ax > Bx end, Stream)
       end
    end.
 
@@ -138,7 +130,7 @@ gt(#{'_' := [A, B]}) ->
 le(#{'_' := [A, B]}) ->
    fun(_) ->
       fun(Stream) ->
-         [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =< Bx end, Stream)]
+         stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =< Bx end, Stream)
       end
    end.
 
@@ -147,7 +139,7 @@ le(#{'_' := [A, B]}) ->
 ge(#{'_' := [A, B]}) ->
    fun(_) ->
       fun(Stream) ->
-         [pipe|stream:filter(fun(#{A := Ax, B := Bx}) -> Ax >= Bx end, Stream)]
+         stream:filter(fun(#{A := Ax, B := Bx}) -> Ax >= Bx end, Stream)
       end
    end.
 
