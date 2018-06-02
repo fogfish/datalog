@@ -14,14 +14,14 @@
 %%   limitations under the License.
 %%
 %% @doc
-%%   datalog sigma helper
+%%   datalog sigma evaluator
 -module(datalog_sigma).
 
 -include_lib("datum/include/datum.hrl").
 
 -export([
    stream/1,
-   bind/2,
+   % bind/2,
    filter/2
 ]).
 
@@ -37,21 +37,20 @@ stream(Predicate) ->
 unfold({_, _, ?stream()}) ->
    stream:new();
 
-unfold({#{'_' := H} = Predicate, Env, Stream}) ->
-   Head  = stream:head(Stream),
+unfold({#{'_' := Head} = Predicate, Env, Stream}) ->
+   Left  = stream:head(Stream),
    Tail  = stream:tail(Stream),
-   Sigma = head(H, (build(maps:merge(Predicate, Head)))(Env)),
-   unfold({Predicate, Env, Sigma, Head, Tail});
+   Sigma = head(Head, (build(maps:merge(Predicate, Left)))(Env)),
+   unfold({Predicate, Env, Sigma, Left, Tail});
 
-unfold({Predicate, Env, ?stream(), _Head, Tail}) ->
+unfold({Predicate, Env, ?stream(), _, Tail}) ->
    unfold({Predicate, Env, Tail});
 
-unfold({Predicate, Env, Stream, Head, Tail}) ->
+unfold({Predicate, Env, Stream, Left, Tail}) ->
    {
-      maps:merge(stream:head(Stream), Head),
-      {Predicate, Env, stream:tail(Stream), Head, Tail}
+      maps:merge(stream:head(Stream), Left),
+      {Predicate, Env, stream:tail(Stream), Left, Tail}
    }.
-
 
 %%
 %% build a "tuple" stream using stream generator
@@ -86,19 +85,6 @@ head(Head, Stream) ->
       Stream
    ).
 
-
-
-
-%%
-%% bind pattern with resolved variable from heap
--spec bind(map(), datalog:pattern()) -> datalog:pattern().
-
-bind(Heap, Pattern) ->
-   % maps:merge(...) provides out-of-implementation for the library
-   % it merges two maps into a single map. if two keys (variables) exists in both maps 
-   % the value in Pattern will be superseded by the value in Heap.
-   % Thus any BIF are converted to pattern match
-   maps:merge(Pattern, Heap).
 
 %%
 %% build an in-line stream filter using predicate term and pattern  

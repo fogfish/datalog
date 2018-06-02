@@ -8,7 +8,8 @@
    unary_lt_2/0,
    unary_le_2/0,
    unary_gt_2/0,
-   unary_ge_2/0
+   unary_ge_2/0,
+   unary_ne_2/0
 ]).
 
 unary() ->
@@ -51,4 +52,9 @@ unary_gt_2() ->
 unary_ge_2() ->
    [
       #{a => 2}, #{a => 3}
+   ].
+
+unary_ne_2() ->
+   [
+      #{a => 1}, #{a => 3}
    ].

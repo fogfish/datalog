@@ -10,7 +10,8 @@
    unary_lt_2/1,
    unary_le_2/1,
    unary_gt_2/1,
-   unary_ge_2/1
+   unary_ge_2/1,
+   unary_ne_2/1
 ]).
 
 all() ->
@@ -21,7 +22,8 @@ all() ->
       unary_lt_2,
       unary_le_2,
       unary_gt_2,
-      unary_ge_2
+      unary_ge_2,
+      unary_ne_2
    ].
 
 datalog(Datalog, Fixture, Expect) ->
@@ -80,4 +82,11 @@ unary_ge_2(_) ->
       "h(a) :- p(a), a >= 2.",
       datalog_FIXTURE:unary(),
       datalog_FIXTURE:unary_ge_2()
+   ).
+
+unary_ne_2(_) ->
+   datalog(
+      "h(a) :- p(a), a != 2.",
+      datalog_FIXTURE:unary(),
+      datalog_FIXTURE:unary_ne_2()
    ).

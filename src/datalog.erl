@@ -51,7 +51,6 @@
 %%
 %% sigma function utility 
 -export([
-   bind/2,
    filter/1,
    takewhile/2
 ]).
@@ -175,13 +174,6 @@ ge(X) -> datalog_lang:ge(X).
 %%%----------------------------------------------------------------------------
 
 %%
-%% bind pattern with resolved variable from heap  
--spec bind(map(), pattern()) -> pattern().
-
-bind(Heap, Pattern) -> 
-   datalog_sigma:bind(Heap, Pattern).
-
-%%
 %% in-line stream filter(s) using predicate term and pattern 
 -spec filter(pattern()) -> fun( (_, datum:stream()) -> datum:stream() ).
 
@@ -219,13 +211,9 @@ list(Pattern) ->
 %%
 %% parse datalog to native format
 -spec p(string()) -> datalog:q().
-% -spec pflat(string()) -> datalog:q().
 
 p(Datalog) ->
    p(Datalog, fun datalog_q:native/1).
-
-% pflat(Datalog) ->
-%    p(Datalog, fun datalog_q:native_flat/1).
 
 p(Datalog, Compiler) ->
    try
@@ -245,20 +233,41 @@ p(Datalog, Compiler) ->
 %% compile native datalog to evaluator function 
 % -spec c(datalog:q()) -> heap().
 
-c(Source, Datalog) ->
-   c(a, Source, Datalog).
+c(Source, [{'?', #{'@' := Goal}} | Datalog]) ->
+   c(Goal, Source, Datalog).
 
 c(Goal, Source, Datalog) ->
-   [Head | Body] = maps:get(Goal, Datalog),
-   datalog:horn(Head, [cc(Predicate, Source) || Predicate <- Body]).   
+   cc_horn(lens:get(lens:pair(Goal), Datalog), Source, Datalog).
 
-cc(#{'@' := {datalog, Fun}, '_' := Head} = Predicate, _) ->
+cc_horn([Head, #{'_' := Literal} = Predicate], Source, Datalog) ->
+   case lists:all(fun(X) -> not is_atom(X) end, Literal) of
+      true  ->
+         Pred = lists:foldl(
+            fun({Key, Lit}, Acc) -> 
+               maps:put(Key, Lit, Acc)
+            end,
+            Predicate#{'_' => Head},
+            lists:zip(Head, Literal)
+         ),
+         datalog:horn(Head, [cc(Pred, Source, Datalog)]);
+      false ->
+         datalog:horn(Head, [cc(Predicate, Source, Datalog)])
+   end;
+      
+cc_horn([Head | Body], Source, Datalog) ->
+   datalog:horn(Head, [cc(Predicate, Source, Datalog) || Predicate <- Body]).
+
+cc(#{'@' := {datalog, Fun}} = Predicate, _, _) ->
    datalog_lang:Fun(Predicate);
-   % datalog_sigma:stream(maps:put('@', fun Mod:Fun/N, Predicate));
 
-cc(#{'@' := Gen, '_' := Head} = Predicate, Source) ->
-   N = length(Head),
-   datalog_sigma:stream(maps:put('@', fun Source:Gen/N, Predicate)).
+cc(#{'@' := Gen, '_' := Head} = Predicate, Source, Datalog) ->
+   case lens:get(lens:pair(Gen), Datalog) of
+      undefined ->
+         N = length(Head),
+         datalog_sigma:stream(maps:put('@', fun Source:Gen/N, Predicate));
+      Horn ->
+         cc_horn(Horn, Source, Datalog)
+   end.
 
    % {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
 

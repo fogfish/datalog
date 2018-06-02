@@ -32,55 +32,12 @@ stream(Head, Horn) ->
       end
    end.
 
-
-% stream([Head | Horn0], Program) ->
-%    Horn1 = [maps:put('@', maps:get(Gen, Program), Predicate) || #{'@' := Gen} = Predicate <- Horn0],
-%    fun(Env) ->
-%       Horn2 = [(datalog_sigma:stream(Predicate))(Env) || Predicate <- Horn1],
-%       fun(Stream) ->
-%          head(Head, join(Stream, Horn2))
-%       end
-%    end.
-
 join(?stream(), _) ->
    stream:new();
 join(Stream, [Predicate | Horn]) ->
    join(Predicate(Stream), Horn);
 join(Stream, []) ->
    Stream.
-
-
-%%
-%% compose sigma evaluator to stream 
-compose(_, ?stream()) ->
-   stream:new();
-compose(Fun, Stream) ->
-   compose(Fun(Stream), Fun, Stream).
-
-compose([pipe|Egress], _, _) ->
-   % evaluator function is stream modifier, it produce a new egress stream to output
-   Egress;
-
-compose(_, _, ?stream()) ->
-   stream:new();
-
-compose(Egress, Fun, Stream) ->
-   % evaluator function produce an egress stream to join with ingress stream
-   stream:unfold(fun unfold/1, {Egress, Fun, stream:head(Stream), stream:tail(Stream)}).
-
-%%
-%% 
-unfold({?stream(), _, _, ?stream()}) ->
-   stream:new();
-
-unfold({?stream(), Fun, _, Stream}) ->
-   unfold({Fun(Stream), Fun, stream:head(Stream), stream:tail(Stream)});
-
-unfold({#stream{} = Egress, Fun, Head, Stream}) ->
-   {
-      maps:merge(stream:head(Egress), Head), 
-      {stream:tail(Egress), Fun, Head, Stream}
-   }.
 
 %%
 %% applies head projection to output stream
