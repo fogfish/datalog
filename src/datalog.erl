@@ -239,26 +239,22 @@ c(Source, [{'?', #{'@' := Goal}} | Datalog]) ->
 c(Goal, Source, Datalog) ->
    cc_horn(lens:get(lens:pair(Goal), Datalog), Source, Datalog).
 
-cc_horn([Head, #{'_' := Literal} = Predicate], Source, Datalog) ->
-   case lists:all(fun(X) -> not is_atom(X) end, Literal) of
-      true  ->
-         Pred = lists:foldl(
-            fun({Key, Lit}, Acc) -> 
-               maps:put(Key, Lit, Acc)
-            end,
-            Predicate#{'_' => Head},
-            lists:zip(Head, Literal)
-         ),
-         datalog:horn(Head, [cc(Pred, Source, Datalog)]);
-      false ->
-         datalog:horn(Head, [cc(Predicate, Source, Datalog)])
-   end;
+cc_horn([Head, #{'@' := {datalog, stream}, '_' := Literal} = Predicate], Source, Datalog) ->
+   datalog:horn(Head, [cc(Predicate#{'_' => Head, '.' => Literal}, Source, Datalog)]);
       
 cc_horn([Head | Body], Source, Datalog) ->
    datalog:horn(Head, [cc(Predicate, Source, Datalog) || Predicate <- Body]).
 
+cc(#{'@' := {datalog, stream}, '_' := Head} = Predicate, Source, _) ->
+   N = length(Head),
+   datalog_sigma:stream(maps:put('@', fun Source:stream/N, Predicate));
+
 cc(#{'@' := {datalog, Fun}} = Predicate, _, _) ->
    datalog_lang:Fun(Predicate);
+
+cc(#{'@' := {Mod, Gen}, '_' := Head} = Predicate, _, _) ->
+   N = length(Head),
+   datalog_sigma:stream(maps:put('@', fun Mod:Gen/N, Predicate));
 
 cc(#{'@' := Gen, '_' := Head} = Predicate, Source, Datalog) ->
    case lens:get(lens:pair(Gen), Datalog) of
@@ -268,17 +264,6 @@ cc(#{'@' := Gen, '_' := Head} = Predicate, Source, Datalog) ->
       Horn ->
          cc_horn(Horn, Source, Datalog)
    end.
-
-   % {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
-
-% stream([Head | Horn0], Program) ->
-%    Horn1 = [ || #{'@' := Gen} = Predicate <- Horn0],
-%    fun(Env) ->
-%       Horn2 = [(datalog_sigma:stream(Predicate))(Env) || Predicate <- Horn1],
-%       fun(Stream) ->
-%          head(Head, join(Stream, Horn2))
-%       end
-%    end.
 
 
 % c(Datalog) ->

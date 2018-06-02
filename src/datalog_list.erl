@@ -19,7 +19,7 @@
 -compile({parse_transform, category}).
 
 -export([
-   s/2,
+   stream/2,
    p/1,
    p/2,
    p/3,
@@ -27,7 +27,7 @@
    p/5
 ]).
 
-s(X1, X2) ->
+stream(X1, X2) ->
    io:format("=[ x1 ]=> ~p ~p~n", [X1, X2]),
    fun(List) ->
       io:format("=[ list ]=> ~p~n", [List]),

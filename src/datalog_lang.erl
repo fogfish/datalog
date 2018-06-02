@@ -20,6 +20,7 @@
 -include_lib("datum/include/datum.hrl").
 
 -export([
+   stream/2,
    unique/1, flat/1,
    eq/1, ne/1, lt/1, gt/1, le/1, ge/1
 ]).
@@ -27,6 +28,15 @@
 %%
 %% scalable bloom filter definition
 -define(SBF, sbf:new(128, 0.0001)).
+
+stream(Source, X) ->
+   io:format("==> ~p ~p~n", [Source, X]),
+   fun(_Env) ->
+      fun(Stream) ->
+         io:format("==> ~p~n", [Stream]),
+         Stream
+      end
+   end.
 
 %%
 %% a predicate ensures unique terms within the stream

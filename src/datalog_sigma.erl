@@ -54,6 +54,8 @@ unfold({Predicate, Env, Stream, Left, Tail}) ->
 
 %%
 %% build a "tuple" stream using stream generator
+build(#{'@' := Gen, '.' := Literal, '_' := Head} = Predicate) ->
+   Gen(Literal, [term(X, Predicate) || X <- Head]);
 build(#{'@' := Gen, '_' := [X1]} = Predicate) ->
    Gen(term(X1, Predicate));
 build(#{'@' := Gen, '_' := [X1, X2]} = Predicate) ->
