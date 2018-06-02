@@ -95,7 +95,7 @@
 %%%----------------------------------------------------------------------------
 
 %%
-%% 
+%% sigma evaluator (generator of relation streams) 
 sigma(Head, Gen) ->
    sigma(Head, #{}, Gen).
 
@@ -103,15 +103,10 @@ sigma(Head, Filters, Gen) ->
    datalog_sigma:stream(Filters#{'@' => Gen, '_' => Head}).
 
 %%
-%% build horn clause evaluator
--spec horn(head(), body()) -> heap().
-
+%% horn clause evaluator
 horn(Head, Body) ->
    datalog_horn:stream(Head, Body).
 
-   % fun(X) ->
-   %    datalog_horn:stream(Head, [Fun(X) || Fun <- Body])
-   % end.
 
 %%
 %% build datalog query evaluator
@@ -251,29 +246,51 @@ p(Datalog, Compiler) ->
 -spec c(datalog:q()) -> heap().
 
 c(Datalog) ->
-   c(datalog, Datalog).
+   c(a, Datalog).
 
-c(Mod, Datalog) ->
-   {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
-   datalog:horn(Head,
-      [cc(Mod, Pat) || Pat <- Body]
-   ).
+c(Goal, Datalog) ->
+   [Head | Body] = maps:get(Goal, Datalog),
+   datalog:horn(Head, [cc(Predicate, Datalog) || Predicate <- Body]).   
 
-cc(_, #{'@' := {Mod, Fun}} = Pat) ->
-   cc_eval(Mod, Fun, Pat);
+cc(#{'@' := Gen} = Predicate, Datalog) ->
+   datalog_sigma:stream(maps:put('@', maps:get(Gen, Datalog), Predicate)).
 
-cc(Mod, #{'@' := Fun} = Pat) ->
-   cc_eval(Mod, Fun, Pat).
+   % {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
 
-cc_eval(Mod, Fun, Pat) ->
-   case 
-      lists:keyfind(Fun, 1, Mod:module_info(exports))
-   of
-      {Fun, 1} ->
-         Mod:Fun(Pat);
-      _        ->
-         Mod:sigma(Pat)
-   end.
+% stream([Head | Horn0], Program) ->
+%    Horn1 = [ || #{'@' := Gen} = Predicate <- Horn0],
+%    fun(Env) ->
+%       Horn2 = [(datalog_sigma:stream(Predicate))(Env) || Predicate <- Horn1],
+%       fun(Stream) ->
+%          head(Head, join(Stream, Horn2))
+%       end
+%    end.
+
+
+% c(Datalog) ->
+%    c(datalog, Datalog).
+
+% c(Mod, Datalog) ->
+%    {_Horn, [Head | Body]} = hd(maps:to_list(Datalog)),
+%    datalog:horn(Head,
+%       [cc(Mod, Pat) || Pat <- Body]
+%    ).
+
+% cc(_, #{'@' := {Mod, Fun}} = Pat) ->
+%    cc_eval(Mod, Fun, Pat);
+
+% cc(Mod, #{'@' := Fun} = Pat) ->
+%    cc_eval(Mod, Fun, Pat).
+
+% cc_eval(Mod, Fun, Pat) ->
+%    case 
+%       lists:keyfind(Fun, 1, Mod:module_info(exports))
+%    of
+%       {Fun, 1} ->
+%          Mod:Fun(Pat);
+%       _        ->
+%          Mod:sigma(Pat)
+%    end.
 
 %%
 %% compile native datalog horn as single function 
