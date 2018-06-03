@@ -26,7 +26,7 @@ stream(Head, Horn) ->
    fun(Env) ->
       Rule = [Fun(Env) || Fun <- Horn],
       fun(Stream) ->
-         join(Stream, Rule)
+         head(Head, join(Stream, Rule))
       end
    end.
 
@@ -36,4 +36,9 @@ join(Stream, [Predicate | Horn]) ->
    join(Predicate(Stream), Horn);
 join(Stream, []) ->
    Stream.
+
+%%
+%% applies head projection to output stream
+head(Head, Stream) ->
+   stream:map(fun(X) -> maps:with(Head, X) end, Stream).
 
