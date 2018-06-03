@@ -27,7 +27,7 @@
    q/3,
    p/1,
    c/2,
-   c/3,
+   c/4,
    filter/1,
    takewhile/2
 ]).
@@ -138,11 +138,16 @@ p(Datalog, Compiler) ->
 
 %%
 %% compile native datalog to evaluator function 
-c(Source, [{'?', #{'@' := Goal}} | Datalog]) ->
-   c(Goal, Source, Datalog).
+c(Source, [{'?', #{'@' := Goal, '_' := Head}} | Datalog]) ->
+   c(Goal, Head, Source, Datalog).
 
-c(Goal, Source, Datalog) ->
-   cc_horn(lens:get(lens:pair(Goal), Datalog), Source, Datalog).
+c(Goal, Head, Source, Datalog) ->
+   LP = cc_horn(lens:get(lens:pair(Goal), Datalog), Source, Datalog),
+   fun(Env) ->
+      fun(Stream) ->
+         stream:map(fun(X) -> maps:with(Head, X) end, (LP(Env))(Stream))
+      end
+   end.
 
 cc_horn([Head, #{'@' := {datalog, stream}, '_' := Literal} = Predicate], Source, Datalog) ->
    datalog:horn(Head, [cc(Predicate#{'_' => Head, '.' => Literal}, Source, Datalog)]);
