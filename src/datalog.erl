@@ -151,8 +151,7 @@ cc_horn([Head | Body], Source, Datalog) ->
    datalog:horn(Head, [cc(Predicate, Source, Datalog) || Predicate <- Body]).
 
 cc(#{'@' := {datalog, stream}, '_' := Head} = Predicate, Source, _) ->
-   N = length(Head),
-   datalog_sigma:stream(maps:put('@', fun Source:stream/N, Predicate));
+   datalog_sigma:stream(maps:put('@', fun Source:stream/2, Predicate));
 
 cc(#{'@' := {datalog, Fun}} = Predicate, _, _) ->
    datalog_lang:Fun(Predicate);
