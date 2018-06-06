@@ -27,11 +27,13 @@
    p/5
 ]).
 
+stream(undefined, X2) ->
+   stream(0, X2);
 stream(X1, X2) ->
    io:format("=[ x1 ]=> ~p ~p~n", [X1, X2]),
    fun(List) ->
-      io:format("=[ list ]=> ~p~n", [List]),
-      stream:map(fun erlang:tuple_to_list/1, stream:build([{1, 10}, {2, 20}, {3, 30}]))
+      % io:format("=[ list ]=> ~p~n", [List]),
+      stream:map(fun erlang:tuple_to_list/1, stream:build([{hd(X2), 10}, {hd(X2), 20}, {hd(X2), 30}]))
    end.
 
 p(X1) ->

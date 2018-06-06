@@ -27,7 +27,7 @@
    q/3,
    p/1,
    c/2,
-   c/3,
+   % c/3,
    filter/1,
    takewhile/2
 ]).
@@ -122,11 +122,11 @@ takewhile(X, Pattern) ->
 p(Datalog) ->
    p(Datalog, fun datalog_q:native/1).
 
-p(Datalog, Compiler) ->
+p(Datalog, PreProcessor) ->
    try
       {ok, Lex, _} = datalog_leex:string(Datalog), 
       {ok, Req}    = datalog_yeec:parse(Lex),
-      Compiler(Req)
+      PreProcessor(Req)
    catch
    _:{badmatch, {error, {_, rds_parser, Reason}}} ->
       {error, Reason}; 
@@ -139,51 +139,101 @@ p(Datalog, Compiler) ->
 %%
 %% compile native datalog to evaluator function 
 c(Source, [{'?', #{'@' := Goal}} | Datalog]) ->
-   c(Goal, Source, Datalog).
+   lists:foldl(fun(Horn, LP) -> cc_horn(Horn, Source, LP) end, #{}, Datalog).
+   % c(Goal, Source, Datalog).
 
-c(Goal, Source, Datalog) ->
-   cc_horn(lens:get(lens:pair(Goal), Datalog), Source, Datalog).
+cc_horn({Id, [Head, #{'@' := {datalog, stream}, '_' := Keys} = Sigma]}, Source, Lp) ->
+   Lp#{Id => cc_sigma(Sigma#{'_' => Head, '.' => Keys}, Source, Lp)};
 
-cc_horn([Head, #{'@' := {datalog, stream}, '_' := Literal} = Predicate], Source, Datalog) ->
-   datalog:horn(Head, [cc(Predicate#{'_' => Head, '.' => Literal}, Source, Datalog)]);
-      
-cc_horn([Head | Body], Source, Datalog) ->
-   datalog:horn(Head, [cc(Predicate, Source, Datalog) || Predicate <- Body]).
+cc_horn({Id, [Head | Body]}, Source, Lp) ->
+   Lp#{Id => datalog_vm:horn(Head, [cc_sigma(Sigma, Source, Lp) || Sigma <- Body])}.
 
-cc(#{'@' := {datalog, stream}, '_' := Head} = Predicate, Source, _) ->
-   datalog_sigma:stream(maps:put('@', fun Source:stream/2, Predicate));
+cc_sigma(#{'@' := {datalog, stream}} = Sigma, Source, _) ->
+   datalog_vm:stream(Sigma#{'@' => fun Source:stream/2});
 
-cc(#{'@' := {datalog, Fun}} = Predicate, _, _) ->
-   datalog_lang:Fun(Predicate);
-
-cc(#{'@' := {Mod, Gen}, '_' := Head} = Predicate, _, _) ->
-   N = length(Head),
-   datalog_sigma:stream(maps:put('@', fun Mod:Gen/N, Predicate));
-
-cc(#{'@' := Gen, '_' := Head} = Predicate, Source, Datalog) ->
-   case lens:get(lens:pair(Gen), Datalog) of
+cc_sigma(#{'@' := Gen, '_' := Head} = Pred, Source, Lp) ->
+   case maps:get(Gen, Lp, undefined) of
       undefined ->
          N = length(Head),
-         datalog_sigma:stream(maps:put('@', fun Source:Gen/N, Predicate));
-      Horn ->
-         cc_horn(cc_carry_guards(Horn, Predicate), Source, Datalog)
+         Pred#{'@' => fun Source:Gen/N};
+      Ref ->
+         Pred#{'@' => Ref}
    end.
 
-%%
-%% current horn clause applies "filters" to projection
-%% this filters needs to be lifted to sigma function
-cc_carry_guards([Head | Body], #{'_' := Literal} = Predicate) ->
-   %% a(x,y) :- ...
-   %%   ...  :- ... a(x,"Test") ...
-   Lits = maps:from_list(
-      lists:filter(
-         fun({_, X}) -> not is_atom(X) end, 
-         lists:zip(Head, Literal)
-      )
-   ),
-   %% a(x,y) :- ...
-   %%   ...  :- ... a(x,y) ... y = "Test"
-   Grds = maps:with(Head, Predicate),
-   Pred = maps:merge(Grds, Lits), 
-   [Head | [maps:merge(Pred, X) || X <- Body]].
+
+% c(Goal, Source, Datalog) ->
+%    cc_horn(lens:get(lens:pair(Goal), Datalog), Source, Datalog).
+
+% cc_horn([Head, #{'@' := {datalog, stream}, '_' := Literal} = Predicate], Source, Datalog) ->
+%    datalog:horn(Head, lists:flatten([cc(Predicate#{'_' => Head, '.' => Literal}, Source, Datalog)]));
+      
+% cc_horn([Head | Body], Source, Datalog) ->
+%    datalog:horn(Head, lists:flatten([cc(Predicate, Source, Datalog) || Predicate <- Body])).
+
+% cc(#{'@' := {datalog, stream}, '_' := Head} = Predicate, Source, _) ->
+%    datalog_sigma:stream(maps:put('@', fun Source:stream/2, Predicate));
+
+% cc(#{'@' := {datalog, Fun}} = Predicate, _, _) ->
+%    datalog_lang:Fun(Predicate);
+
+% cc(#{'@' := {Mod, Gen}, '_' := Head} = Predicate, _, _) ->
+%    N = length(Head),
+%    datalog_sigma:stream(maps:put('@', fun Mod:Gen/N, Predicate));
+
+% cc(#{'@' := Gen, '_' := Head} = Predicate, Source, Datalog) ->
+%    case lens:get(lens:pair(Gen), Datalog) of
+%       undefined ->
+%          N = length(Head),
+%          datalog_sigma:stream(maps:put('@', fun Source:Gen/N, Predicate));
+%       [X | _ ] = Horn ->
+%          [stack(Head, X), cc_horn(cc_carry_guards(Horn, Predicate), Source, Datalog), stack(X, Head)]
+%    end.
+
+% %%
+% %%
+% stack(From, Head) ->
+%    fun(_) ->
+%       fun(Stream) ->
+%          stream:map(
+%             fun(X) ->
+%                io:format("=[ from ]=> ~p~n", [From]),
+%                io:format("=[ head ]=> ~p~n", [Head]),
+%                io:format("=[ xxxx ]=> ~p~n", [X]),
+%                Y = lists:foldl(
+%                   fun({Ax, Bx}, Acc) ->
+%                      case maps:get(Ax, X, undefined) of
+%                         undefined -> Acc;
+%                         Z -> maps:put(Bx, Z, Acc)
+%                      end
+%                   end,
+%                   X,
+%                   lists:zip(From, Head)
+%                ),
+%                io:format("=[ yyyy ]=> ~p~n", [Y]),
+%                Y 
+%             end,
+%             Stream
+%          )
+%       end
+%    end.
+
+
+
+% %%
+% %% current horn clause applies "filters" to projection
+% %% this filters needs to be lifted to sigma function
+% cc_carry_guards([Head | Body], #{'_' := Literal} = Predicate) ->
+%    %% a(x,y) :- ...
+%    %%   ...  :- ... a(x,"Test") ...
+%    Lits = maps:from_list(
+%       lists:filter(
+%          fun({_, X}) -> not is_atom(X) end, 
+%          lists:zip(Head, Literal)
+%       )
+%    ),
+%    %% a(x,y) :- ...
+%    %%   ...  :- ... a(x,y) ... y = "Test"
+%    Grds = maps:with(Head, Predicate),
+%    Pred = maps:merge(Grds, Lits), 
+%    [Head | [maps:merge(Pred, X) || X <- Body]].
 

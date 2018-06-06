@@ -21,7 +21,6 @@
 
 -export([
    stream/1,
-   % bind/2,
    filter/2
 ]).
 
@@ -40,6 +39,7 @@ unfold({_, _, ?stream()}) ->
 unfold({#{'_' := Head} = Predicate, Env, Stream}) ->
    Left  = stream:head(Stream),
    Tail  = stream:tail(Stream),
+   io:format("=[ p strm ]=> ~p~n", [Predicate]),
    Sigma = head(Head, (build(maps:merge(Predicate, Left)))(Env)),
    unfold({Predicate, Env, Sigma, Left, Tail});
 
