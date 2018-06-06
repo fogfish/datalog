@@ -138,9 +138,12 @@ p(Datalog, PreProcessor) ->
 
 %%
 %% compile native datalog to evaluator function 
-c(Source, [{'?', #{'@' := Goal}} | Datalog]) ->
-   lists:foldl(fun(Horn, LP) -> cc_horn(Horn, Source, LP) end, #{}, Datalog).
-   % c(Goal, Source, Datalog).
+c(Source, [{'?', #{'@' := Goal, '_' := Head}} | Datalog]) ->
+   Lprogram = lists:foldl(fun(Horn, LP) -> cc_horn(Horn, Source, LP) end, #{}, Datalog),
+   Fun = maps:get(Goal, Lprogram),
+   fun(Env) ->
+      (Fun(Env))(Head)
+   end.
 
 cc_horn({Id, [Head, #{'@' := {datalog, stream}, '_' := Keys} = Sigma]}, Source, Lp) ->
    Lp#{Id => cc_sigma(Sigma#{'_' => Head, '.' => Keys}, Source, Lp)};

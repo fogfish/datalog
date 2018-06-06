@@ -14,7 +14,7 @@
 %%   limitations under the License.
 %%
 %% @doc
-%%   reference implementation
+%%   a reference implementation of stream generators
 -module(datalog_list).
 -compile({parse_transform, category}).
 
@@ -27,15 +27,26 @@
    p/5
 ]).
 
-stream(undefined, X2) ->
-   stream(0, X2);
-stream(X1, X2) ->
-   io:format("=[ x1 ]=> ~p ~p~n", [X1, X2]),
+%%
+%% a(x,y) :- .stream(...)
+stream([Len|Gen], SubQ) ->
    fun(List) ->
-      % io:format("=[ list ]=> ~p~n", [List]),
-      stream:map(fun erlang:tuple_to_list/1, stream:build([{hd(X2), 10}, {hd(X2), 20}, {hd(X2), 30}]))
+      stream:zip([gen(Len, N, Filter) || {N, Filter} <- lists:zip(Gen, SubQ)])
    end.
 
+gen(Len, N, Filter) ->
+   [identity ||
+      stream:build(N),
+      stream:take(Len, _),
+      filter(Filter, _)
+   ].
+
+filter(Filter, Stream) ->
+   Fun  = datalog:filter(Filter),
+   Fun(fun(X) -> X end, Stream).
+
+%%
+%%
 p(X1) ->
    fun(List) ->
       [identity ||
