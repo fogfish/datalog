@@ -47,7 +47,10 @@ horn(Head, Horn) ->
       end
    end.
 
-join(Stream, [#{'_' := Head} = HHorn | THorn]) ->
+join(Stream, [#{'.' := pipe, '@' := Pipe} | THorn]) ->
+   join(Pipe(Stream), THorn);
+
+join(Stream, [HHorn | THorn]) ->
    join(
       flatmap(
          fun(Heap) ->
@@ -86,7 +89,7 @@ term(T, _) ->
 
 %%
 %% evaluate stream 
-stream(#{'_' := Head, '.' := Keys, '@' := Gen}) ->
+stream(#{'.' := Keys, '@' := Gen}) ->
    fun(Env) ->
       fun(SubQ) -> (Gen(Keys, SubQ))(Env) end
    end;

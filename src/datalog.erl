@@ -176,6 +176,9 @@ cc_horn({Id, [Head | Body]}, Source, Lp) ->
 cc_sigma(#{'@' := {datalog, stream}} = Sigma, Source, _) ->
    datalog_vm:stream(Sigma#{'@' => fun Source:stream/2});
 
+cc_sigma(#{'@' := {datalog, Fun}} = Sigma, Source, _) ->
+   Sigma#{'@' => datalog_lang:Fun(Sigma), '.' => pipe};
+
 cc_sigma(#{'@' := Gen, '_' := Head} = Pred, Source, Lp) ->
    case maps:get(Gen, Lp, undefined) of
       undefined ->
