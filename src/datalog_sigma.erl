@@ -20,72 +20,8 @@
 -include_lib("datum/include/datum.hrl").
 
 -export([
-   stream/1,
    filter/2
 ]).
-
-stream(Predicate) ->
-   fun(Env) ->
-      fun(Stream) ->
-         stream:unfold(fun unfold/1, {Predicate, Env, Stream})
-      end
-   end.
-
-%%
-%% 
-unfold({_, _, ?stream()}) ->
-   stream:new();
-
-unfold({#{'_' := Head} = Predicate, Env, Stream}) ->
-   Left  = stream:head(Stream),
-   Tail  = stream:tail(Stream),
-   io:format("=[ p strm ]=> ~p~n", [Predicate]),
-   Sigma = head(Head, (build(maps:merge(Predicate, Left)))(Env)),
-   unfold({Predicate, Env, Sigma, Left, Tail});
-
-unfold({Predicate, Env, ?stream(), _, Tail}) ->
-   unfold({Predicate, Env, Tail});
-
-unfold({Predicate, Env, Stream, Left, Tail}) ->
-   {
-      maps:merge(stream:head(Stream), Left),
-      {Predicate, Env, stream:tail(Stream), Left, Tail}
-   }.
-
-%%
-%% build a "tuple" stream using stream generator
-build(#{'@' := Gen, '.' := Literal, '_' := Head} = Predicate) ->
-   Gen(Literal, [term(X, Predicate) || X <- Head]);
-build(#{'@' := Gen, '_' := [X1]} = Predicate) ->
-   Gen(term(X1, Predicate));
-build(#{'@' := Gen, '_' := [X1, X2]} = Predicate) ->
-   Gen(term(X1, Predicate), term(X2, Predicate));
-build(#{'@' := Gen, '_' := [X1, X2, X3]} = Predicate) ->
-   Gen(term(X1, Predicate), term(X2, Predicate), term(X3, Predicate));
-build(#{'@' := Gen, '_' := [X1, X2, X3, X4]} = Predicate) ->
-   Gen(term(X1, Predicate), term(X2, Predicate), term(X3, Predicate), term(X4, Predicate)).
-
-term(T, Predicate)
- when is_atom(T) ->
-   case Predicate of
-      #{T := Value} -> Value;
-      _             -> '_'
-   end;
-term(T, _) ->
-   T.
-
-%%
-%% normalize stream and bind head variable to ground fact value(s)
-%% The library uses `map()` as data structure for tuples.
-%% It allows efficiently bind deducted values to head variable.
-%% Each sigma function return stream of tuples.
-head(Head, Stream) ->
-   stream:map(
-      fun(Tuple) ->
-         maps:from_list( lists:zip(Head, Tuple) )
-      end,
-      Stream
-   ).
 
 
 %%
@@ -101,6 +37,9 @@ filter(With, Pattern) ->
    end.
 
 filter_spec('_') ->
+   undefined;
+
+filter_spec(undefined) ->
    undefined;
 
 filter_spec(Pattern)
