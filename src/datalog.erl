@@ -27,7 +27,7 @@
    q/3,
    p/1,
    c/2,
-   % c/3,
+   c/3,
    filter/1,
    takewhile/2
 ]).
@@ -138,11 +138,33 @@ p(Datalog, PreProcessor) ->
 
 %%
 %% compile native datalog to evaluator function 
-c(Source, [{'?', #{'@' := Goal, '_' := Head}} | Datalog]) ->
+c(Source, Datalog) ->
+   c(Source, Datalog, []).
+
+c(Source, Datalog, Opts) ->
+   case lists:keyfind(return, 1, Opts) of
+      {_, maps} ->
+         c_maps(Source, Datalog);
+      _    ->
+         c_list(Source, Datalog)
+   end.
+
+c_list(Source, [{'?', #{'@' := Goal, '_' := Head}} | Datalog]) ->
    Lprogram = lists:foldl(fun(Horn, LP) -> cc_horn(Horn, Source, LP) end, #{}, Datalog),
    Fun = maps:get(Goal, Lprogram),
    fun(Env) ->
       (Fun(Env))(Head)
+   end.
+
+c_maps(Source, [{'?', #{'@' := Goal, '_' := Head}} | Datalog]) ->
+   Lprogram = lists:foldl(fun(Horn, LP) -> cc_horn(Horn, Source, LP) end, #{}, Datalog),
+   {_, [Vars | _]} = lists:keyfind(Goal, 1, Datalog),
+   Fun = maps:get(Goal, Lprogram),
+   fun(Env) ->
+      stream:map(
+         fun(Tuple) -> maps:from_list( lists:zip(Vars, Tuple) ) end,
+         (Fun(Env))(Head)
+      )
    end.
 
 cc_horn({Id, [Head, #{'@' := {datalog, stream}, '_' := Keys} = Sigma]}, Source, Lp) ->
