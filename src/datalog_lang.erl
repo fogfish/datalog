@@ -20,13 +20,48 @@
 -include_lib("datum/include/datum.hrl").
 
 -export([
-   unique/1, flat/1,
+   filter/2,
+   unique/1,
+   flat/1,
    eq/1, ne/1, lt/1, gt/1, le/1, ge/1
 ]).
 
 %%
 %% scalable bloom filter definition
 -define(SBF, sbf:new(128, 0.0001)).
+
+%%
+%% in-line stream filter(s),
+%% helper function to apply predicate terms and patterns on stream of tuples 
+-spec filter(_, datalog:pattern()) -> _.
+
+filter(_With, '_') ->
+   fun(_Lens, Stream) -> Stream end;
+
+filter(_With, undefined) ->
+   fun(_Lens, Stream) -> Stream end;
+
+filter(With, Pattern)
+ when is_list(Pattern) ->
+   % pattern is guard condition: p(..., X, ...), X > 5, X < 10
+   fun(Lens, Stream) ->
+      lists:foldl(fun(Filter, Acc) -> filter(With, Lens, Filter, Acc) end, Stream, Pattern)
+   end;
+
+filter(With, Pattern) ->
+   filter(With, [{'=:=', Pattern}]).
+
+
+filter(With, Lens, Filter, Stream) ->
+   With(fun(X) -> filter_check(Lens(X), Filter) end, Stream).
+
+filter_check(B, {'>',   A}) -> B >  A;
+filter_check(B, {'>=',  A}) -> B >= A;
+filter_check(B, {'<',   A}) -> B  < A;
+filter_check(B, {'=<',  A}) -> B =< A;
+filter_check(B, {'=:=', A}) -> B =:= A;
+filter_check(B, {'=/=', A}) -> B =/= A.
+
 
 %%
 %% a predicate ensures unique terms within the stream

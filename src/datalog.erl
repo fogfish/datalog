@@ -20,11 +20,7 @@
 %%
 %% datalog interface
 -export([
-   sigma/2,
-   sigma/3,
-   horn/2, 
    q/2,
-   q/3,
    p/1,
    c/2,
    c/3,
@@ -58,35 +54,13 @@
 -type eval()    :: fun( (_) -> datum:stream() ).
 -type heap()    :: fun( (map()) -> eval() ).
 
-%%%----------------------------------------------------------------------------
-%%%
-%%% datalog primitives
-%%%
-%%%----------------------------------------------------------------------------
 
 %%
-%% sigma evaluator (generator of relation streams) 
-sigma(Head, Gen) ->
-   sigma(Head, #{}, Gen).
-
-sigma(Head, Filters, Gen) ->
-   datalog_sigma:stream(Filters#{'@' => Gen, '_' => Head}).
-
-%%
-%% horn clause evaluator
-horn(Head, Body) ->
-   datalog_horn:stream(Head, Body).
-
-%%
-%% build datalog query evaluator
+%% evaluate compiled datalog expression with environment
 -spec q(_, _) -> eval().
--spec q(_, _, _) -> eval().
 
-q(Expr, Env) ->
-   ( Expr(Env) )(stream:new(#{})).   
-
-q(Expr, Heap, Env) ->
-   ( Expr(Env) )(stream:new(Heap)).   
+q(Datalog, Env) ->
+   Datalog(Env).   
 
 %%%----------------------------------------------------------------------------
 %%%
@@ -99,14 +73,14 @@ q(Expr, Heap, Env) ->
 -spec filter(pattern()) -> fun( (_, datum:stream()) -> datum:stream() ).
 
 filter(Pattern) -> 
-   datalog_sigma:filter(fun stream:filter/2, Pattern).
+   datalog_lang:filter(fun stream:filter/2, Pattern).
 
 %%
 %% in-line stream filter(s) using predicate term and pattern 
 -spec takewhile(_, pattern()) -> fun( (_, datum:stream()) -> datum:stream() ).
 
 takewhile(X, Pattern) -> 
-   datalog_sigma:takewhile(fun stream:takewhile/2, X, Pattern).
+   datalog_lang:filter(fun stream:takewhile/2, X, Pattern).
 
 
 %%%----------------------------------------------------------------------------

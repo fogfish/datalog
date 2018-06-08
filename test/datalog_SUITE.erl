@@ -4,110 +4,100 @@
 
 -export([all/0]).
 -export([
-   unary_product/1,
-   unary_join/1,
-   unary_eq_2/1,
-   unary_lt_2/1,
-   unary_le_2/1,
-   unary_gt_2/1,
-   unary_ge_2/1,
-   unary_ne_2/1,
-
-   binary_product/1,
-   binary_join/1
+   product/1,
+   join/1,
+   eq_2/1,
+   lt_2/1,
+   le_2/1,
+   gt_2/1,
+   ge_2/1,
+   ne_2/1
 ]).
 
 all() ->
    [
-      unary_product,
-      unary_join,
-      unary_eq_2,
-      unary_lt_2,
-      unary_le_2,
-      unary_gt_2,
-      unary_ge_2,
-      unary_ne_2,
-
-      binary_product,
-      binary_join
+      product,
+      join,
+      eq_2,
+      lt_2,
+      le_2,
+      gt_2,
+      ge_2,
+      ne_2
    ].
 
-datalog(Datalog, Fixture, Expect) ->
+datalog(Datalog, Expect) ->
    Expect = [identity ||
       datalog:p(Datalog),
       datalog:c(datalog_list, _),
-      datalog:q(_, Fixture),
+      datalog:q(_, []),
       stream:list(_)
    ].
 
 
-unary_product(_) ->
+product(_) ->
    datalog(
-      "?- h(a,b). h(a,b) :- p(a), p(b).",
-      datalog_FIXTURE:unary(),
-      datalog_FIXTURE:unary_product()
+      "?- h(_,_). a(x) :- .stream(3, 1). h(x,y) :- a(x), a(y).",
+      [
+         [1, 1], [1, 2], [1, 3],
+         [2, 1], [2, 2], [2, 3],
+         [3, 1], [3, 2], [3, 3]
+      ]
    ).
 
-unary_join(_) ->
+join(_) ->
    datalog(
-      "?- h(a). h(a) :- p(a), p(a).",
-      datalog_FIXTURE:unary(),
-      datalog_FIXTURE:unary_join()
+      "?- h(_,_). a(x,y) :- .stream(3, 1, 1). h(x,z) :- a(x,y), a(y,z).",
+      [
+         [1, 1], [2, 1], [3, 1]
+      ]
    ).
 
-unary_eq_2(_) ->
+eq_2(_) ->
    datalog(
-      "?- h(a). h(a) :- p(a), a = 2.",
-      datalog_FIXTURE:unary(),
-      datalog_FIXTURE:unary_eq_2()
+      "?- h(_). a(x) :- .stream(3, 1). h(x) :- a(x), x = 2.",
+      [
+         [2]
+      ]
    ).
 
-unary_lt_2(_) ->
+lt_2(_) ->
    datalog(
-      "?- h(a). h(a) :- p(a), a < 2.",
-      datalog_FIXTURE:unary(),
-      datalog_FIXTURE:unary_lt_2()
+      "?- h(_). a(x) :- .stream(3, 1). h(x) :- a(x), x < 2.",
+      [
+         [1]
+      ]
    ).
 
-unary_le_2(_) ->
+le_2(_) ->
    datalog(
-      "?- h(a). h(a) :- p(a), a =< 2.",
-      datalog_FIXTURE:unary(),
-      datalog_FIXTURE:unary_le_2()
+      "?- h(_). a(x) :- .stream(3, 1). h(x) :- a(x), x =< 2.",
+      [
+         [1], [2]
+      ]
    ).
 
-unary_gt_2(_) ->
+gt_2(_) ->
    datalog(
-      "?- h(a). h(a) :- p(a), a > 2.",
-      datalog_FIXTURE:unary(),
-      datalog_FIXTURE:unary_gt_2()
+      "?- h(_). a(x) :- .stream(3, 1). h(x) :- a(x), x > 2.",
+      [
+         [3]
+      ]
    ).
 
-unary_ge_2(_) ->
+ge_2(_) ->
    datalog(
-      "?- h(a). h(a) :- p(a), a >= 2.",
-      datalog_FIXTURE:unary(),
-      datalog_FIXTURE:unary_ge_2()
+      "?- h(_). a(x) :- .stream(3, 1). h(x) :- a(x), x >= 2.",
+      [
+         [2], [3]
+      ]
    ).
 
-unary_ne_2(_) ->
+ne_2(_) ->
    datalog(
-      "?- h(a). h(a) :- p(a), a != 2.",
-      datalog_FIXTURE:unary(),
-      datalog_FIXTURE:unary_ne_2()
+      "?- h(_). a(x) :- .stream(3, 1). h(x) :- a(x), x != 2.",
+      [
+         [1], [3]
+      ]
    ).
 
-
-binary_product(_) ->
-   datalog(
-      "?- h(a,b). h(a,b) :- p(a, x), p(b, y).",
-      datalog_FIXTURE:binary(),
-      datalog_FIXTURE:binary_product()
-   ).
-
-binary_join(_) ->
-   datalog(
-      "?- h(a,b). h(a,b) :- p(a, x), p(x, b).",
-      datalog_FIXTURE:binary(),
-      datalog_FIXTURE:binary_join()
-   ).
