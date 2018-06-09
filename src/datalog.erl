@@ -153,11 +153,11 @@ cc_sigma(#{'@' := {datalog, stream}} = Sigma, Source, _) ->
 cc_sigma(#{'@' := {datalog, Fun}} = Sigma, Source, _) ->
    Sigma#{'@' => datalog_lang:Fun(Sigma), '.' => pipe};
 
-cc_sigma(#{'@' := Gen, '_' := Head} = Pred, Source, Lp) ->
+cc_sigma(#{'@' := Gen, '_' := Head} = Sigma, Source, Lp) ->
    case maps:get(Gen, Lp, undefined) of
       undefined ->
          N = length(Head),
-         Pred#{'@' => fun Source:Gen/N};
+         Sigma#{'@' => datalog_vm:stream(Sigma#{'@' => fun Source:Gen/N})};
       Ref ->
-         Pred#{'@' => Ref}
+         Sigma#{'@' => Ref}
    end.

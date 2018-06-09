@@ -19,9 +19,14 @@
 -compile({parse_transform, category}).
 
 -export([
-   stream/2
+   stream/2,
+   f/1,
+   f/2,
+   f/3
 ]).
 
+%%
+%% example of stream generator, it produces a stream of tuple of integers
 %%
 %% a(x,y) :- .stream(...)
 stream([Len|Gen], SubQ) ->
@@ -40,3 +45,47 @@ filter(Filter, Stream) ->
    Fun  = datalog:filter(Filter),
    Fun(fun(X) -> X end, Stream).
 
+%%
+%% example stream processors, it produces a stream of tuples from list
+%%
+f(X1) ->
+   fun(List) ->
+      [identity ||
+         stream:build(List),
+         nary(1, _),
+         filter(1, X1, _),
+         stream:map(fun erlang:tuple_to_list/1, _)
+      ]
+   end.
+
+f(X1, X2) ->
+   fun(List) ->
+      [identity ||
+         stream:build(List),
+         nary(2, _),
+         filter(1, X1, _),
+         filter(2, X2, _),
+         stream:map(fun erlang:tuple_to_list/1, _)
+      ]
+   end.
+
+f(X1, X2, X3) ->
+   fun(List) ->
+      [identity ||
+         stream:build(List),
+         nary(3, _),
+         filter(1, X1, _),
+         filter(2, X2, _),
+         filter(3, X3, _),
+         stream:map(fun erlang:tuple_to_list/1, _)
+      ]
+   end.
+
+%%
+%%
+nary(N, Stream) ->
+   stream:filter(fun(X) -> is_tuple(X) andalso size(X) =:= N end, Stream).
+
+filter(I, Filter, Stream) ->
+   Fun  = datalog:filter(Filter),
+   Fun(fun(X) -> erlang:element(I, X) end, Stream).
