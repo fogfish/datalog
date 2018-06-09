@@ -14,82 +14,78 @@
 %%   limitations under the License.
 %%
 %% @doc
-%%   reference implementation
+%%   a reference implementation of stream generators
 -module(datalog_list).
+-compile({parse_transform, category}).
 
 -export([
-   sigma/1
+   stream/2,
+   f/1,
+   f/2,
+   f/3
 ]).
 
 %%
-%% sigma function, returns `datalog:pattern()` evaluator for lists
--spec sigma( datalog:pattern() ) -> datalog:heap().
-
-sigma(Expr) ->
-   fun(X) ->
-      fun(Stream) ->
-         stream(X, stream:head(Stream), Expr)
-      end
+%% example of stream generator, it produces a stream of tuple of integers
+%%
+%% a(x,y) :- .stream(...)
+stream([Len|Gen], SubQ) ->
+   fun(List) ->
+      stream:zip([gen(Len, N, Filter) || {N, Filter} <- lists:zip(Gen, SubQ)])
    end.
 
+gen(Len, N, Filter) ->
+   [identity ||
+      stream:build(N),
+      stream:take(Len, _),
+      filter(Filter, _)
+   ].
 
-stream(X, Heap, #{'_' := Head} = Expr) ->
-   %
-   % 3. output stream contains tuples with named values corresponding 
-   % to head definition. The head function normalize stream of 
-   % matched tuples and bind variables to values extracted from ground fact.
-   head(Head,
-      %
-      % 2. let's filter stream of tuples to match the pattern.
-      % The pattern is already re-written, all bound variables are defined 
-      filter(Head, datalog:bind(Heap, Expr), 
-         %  
-         % 1. the arity of head element define super set of tuples that 
-         % are matching the pattern. Let's build a stream of tuples 
-         % from list that satisfy given arity.
-         build(length(Head), X)
-      )
-   ).
-
+filter(Filter, Stream) ->
+   Fun  = datalog:filter(Filter),
+   Fun(fun(X) -> X end, Stream).
 
 %%
-%% build stream of tuples from list
-build(Nary, List) ->
-   stream:filter(
-      fun(X) -> 
-         is_tuple(X) andalso size(X) =:= Nary
-      end,
-      stream:build(List)
-   ).
+%% example stream processors, it produces a stream of tuples from list
+%%
+f(X1) ->
+   fun(List) ->
+      [identity ||
+         stream:build(List),
+         nary(1, _),
+         filter(1, X1, _),
+         stream:map(fun erlang:tuple_to_list/1, _)
+      ]
+   end.
+
+f(X1, X2) ->
+   fun(List) ->
+      [identity ||
+         stream:build(List),
+         nary(2, _),
+         filter(1, X1, _),
+         filter(2, X2, _),
+         stream:map(fun erlang:tuple_to_list/1, _)
+      ]
+   end.
+
+f(X1, X2, X3) ->
+   fun(List) ->
+      [identity ||
+         stream:build(List),
+         nary(3, _),
+         filter(1, X1, _),
+         filter(2, X2, _),
+         filter(3, X3, _),
+         stream:map(fun erlang:tuple_to_list/1, _)
+      ]
+   end.
 
 %%
-%% build a stream filter for each bound variable or guard
-filter(Head, Heap, Stream) ->
-   filter(1, Head, Heap, Stream).
-
-filter(I, [H|T], Heap, Stream0) ->
-   Filter  = datalog:filter(H, Heap),
-   Stream1 = Filter(fun(X) -> erlang:element(I, X) end, Stream0),
-   filter(I + 1, T, Heap, Stream1);
-
-filter(_, [], _, Stream) ->
-   Stream.
-
-
 %%
-%% normalize stream and bind head variable to ground fact value(s)
-head(Head, Stream) ->
-   stream:map(
-      fun(X) ->
-         % The library uses `map()` as data structure for tuples.
-         % It allows efficiently bind deducted values to head variable.
-         % Each sigma function return stream of maps.
-         maps:from_list( 
-            lists:filter(
-               fun({Key, _}) -> is_atom(Key) end,
-               lists:zip(Head, tuple_to_list(X))
-            )
-         )
-      end,
-      Stream
-   ).
+nary(N, Stream) ->
+   stream:filter(fun(X) -> is_tuple(X) andalso size(X) =:= N end, Stream).
+
+filter(I, Filter, Stream) ->
+   Fun  = datalog:filter(Filter),
+   Fun(fun(X) -> erlang:element(I, X) end, Stream).

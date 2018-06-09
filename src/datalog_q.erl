@@ -20,8 +20,7 @@
 -module(datalog_q).
 
 -export([
-   native/1,
-   native_flat/1
+   native/1
 ]).
 
 %%
@@ -29,34 +28,19 @@
 -spec native([{_, _, _}]) -> datalog:q().
 
 native(Horns) ->
-   lists:foldl(
+   lists:foldr(
       fun({Horn, Head, Body}, Datalog) ->
          % datalog complaint body consists of predicates and built-in filters.
          % predicate is converted to `-type pattern()`. The filters are interleaved 
          % into pattern so that sigma function can construct stream of ground facts.
          {Pattern, Filter} = lists:partition(fun(X) -> size(X) =:= 2 end, Body),
-         maps:put(Horn, [Head | ast_to_body(Pattern, Filter)], Datalog);
+         [{Horn, [Head | ast_to_body(Pattern, Filter)]} | Datalog];
 
       ({Horn, Head}, Datalog) ->
-         maps:put('?', #{'@' => Horn, '_' => Head}, Datalog)
+         [{'?', #{'@' => Horn, '_' => Head}} | Datalog]
       end,
-      #{},
+      [],
       Horns 
-   ).
-
-%%
-%%
--spec native_flat([{_, _, _}]) -> datalog:q().
-
-native_flat(Horns) ->
-   lists:map(
-      fun({Horn, Head, Body}) ->
-         {Pattern, Filter} = lists:partition(fun(X) -> size(X) =:= 2 end, Body),
-         [Head | ast_to_body(Pattern, Filter)];
-      ({Horn, Head}) ->
-         #{'_' => Head}
-      end,
-      Horns
    ).
 
 %%
