@@ -14,24 +14,6 @@
 
 %%
 %%
-flatmap(Fun, Stream) ->
-   stream:unfold(fun flatmap/1, {Fun, Stream}).
-
-flatmap({_, ?stream()}) ->
-   stream:new();
-
-flatmap({Fun, Stream}) ->
-   flatmap({Fun(stream:head(Stream)), Fun, stream:tail(Stream)});
-
-flatmap({?stream(), Fun, Stream}) ->
-   flatmap({Fun, Stream});
-
-flatmap({SubStream, Fun, Stream}) ->
-   {stream:head(SubStream), {stream:tail(SubStream), Fun, Stream}}.
-
-
-%%
-%%
 horn(Head, Horn) ->
    fun(Env) ->
       [HHorn | THorn] = [Spec#{'@' => F(Env)} || #{'@' := F} = Spec <- Horn],
@@ -52,11 +34,8 @@ join(Stream, [#{'.' := pipe, '@' := Pipe} | THorn]) ->
 
 join(Stream, [HHorn | THorn]) ->
    join(
-      flatmap(
-         fun(Heap) ->
-            eval(Heap, HHorn)
-         end,
-         Stream
+      stream:flat(
+         stream:map(fun(Heap) -> eval(Heap, HHorn) end, Stream)
       ),
       THorn
    );
