@@ -24,6 +24,7 @@
    p/1,
    c/2,
    c/3,
+   schema/1,
    filter/1,
    takewhile/2
 ]).
@@ -161,3 +162,17 @@ cc_sigma(#{'@' := Gen, '_' := Head} = Sigma, Source, Lp) ->
       Ref ->
          Sigma#{'@' => Ref}
    end.
+
+%%
+%% returns schema of the program goal
+-spec schema(datalog:q()) -> [atom()].
+
+schema(Datalog) ->
+   lens:get(lens_head(lens:get(lens_goal(), Datalog)), Datalog).
+
+lens_goal() ->
+   lens:c(lens:pair('?'), lens:at('@')).
+
+lens_head(Id) ->
+   lens:c(lens:pair(Id), lens:hd()).
+
