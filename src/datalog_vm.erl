@@ -68,6 +68,11 @@ term(T, _) ->
 
 %%
 %% evaluate stream 
+stream(#{'.' := Keys, '>' := Spec, '@' := Gen}) ->
+   fun(Env) ->
+      fun(SubQ) -> (Gen(Keys, SubQ, Spec))(Env) end
+   end;
+
 stream(#{'.' := Keys, '@' := Gen}) ->
    fun(Env) ->
       fun(SubQ) -> (Gen(Keys, SubQ))(Env) end
