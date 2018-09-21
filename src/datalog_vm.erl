@@ -47,7 +47,11 @@ eval(Heap, #{'_' := Head, '@' := Fun} = Spec) ->
    SubQ = [term(T, Spec, Heap) || T <- Head],
    stream:map(
       fun(Tuple) ->
-         maps:merge(Heap, maps:from_list( lists:zip(Head, Tuple) ))
+         %% Note: we need to give a priority to existed heap values, unless '_'
+         %% maps:merge(Heap, maps:from_list( lists:zip(Head, Tuple) ))
+         Prev = maps:filter(fun(_, X) -> X /= '_' end, Heap),
+         This = maps:from_list( lists:zip(Head, Tuple) ),
+         maps:merge(Heap, maps:merge(This, Prev))
       end,
       Fun(SubQ)
    ).
