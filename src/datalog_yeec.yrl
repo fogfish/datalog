@@ -39,11 +39,20 @@ BODY -> ITEM ',' BODY :
 BODY -> ITEM :
    ['$1'].
 
+ITEM -> symbol '(' ')' :
+   {unwrap('$1'), []}.
+
 ITEM -> symbol '(' TERMS ')' :
    {unwrap('$1'), '$3'}.
 
+ITEM -> symbol '.' symbol '(' ')' :
+   {{unwrap('$1'), unwrap('$3')}, []}.
+
 ITEM -> symbol '.' symbol '(' TERMS ')' :
    {{unwrap('$1'), unwrap('$3')}, '$5'}.
+
+ITEM -> '.' symbol '(' ')' :
+   {{datalog, unwrap('$2')}, []}.
 
 ITEM -> '.' symbol '(' TERMS ')' :
    {{datalog, unwrap('$2')}, '$4'}.

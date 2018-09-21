@@ -23,6 +23,7 @@
 -export([
    horn_1/1, 
    horn_n/1,
+   horn_0/1,
    inline_string/1, 
    inline_int/1, 
    inline_float/1,
@@ -49,26 +50,9 @@
 %%%----------------------------------------------------------------------------   
 
 all() ->
-   [
-      horn_1, 
-      horn_n,
-      inline_string,
-      inline_int,
-      inline_float,
-      anything,
-      guard_eq_string,
-      guard_eq_set_of_string, 
-      guard_eq_int, 
-      guard_eq_float,
-      guard_gt_string,
-      guard_gt_int,
-      guard_gt_float,         
-      guard_string,
-      guard_number,
-      bif_datalog,
-      bif_external,
-      semantic_web,
-      jsonld
+   [Test || {Test, NAry} <- ?MODULE:module_info(exports), 
+      Test =/= module_info,
+      NAry =:= 1
    ].
 
 %%%----------------------------------------------------------------------------   
@@ -93,6 +77,15 @@ horn_n(_Config) ->
          #{'@' := b, '_' := [y,z]}
       ]}
    ] = datalog:p("h(x,z) :- a(x, y), b(y, z).").
+
+
+horn_0(_Config) ->
+   [
+      {h, [[x,z], 
+         #{'@' := a, '_' := [x,y]},
+         #{'@' := b, '_' := []}
+      ]}
+   ] = datalog:p("h(x,z) :- a(x, y), b().").
 
 %%
 %%

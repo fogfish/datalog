@@ -15,15 +15,9 @@
 ]).
 
 all() ->
-   [
-      product,
-      join,
-      eq_2,
-      lt_2,
-      le_2,
-      gt_2,
-      ge_2,
-      ne_2
+   [Test || {Test, NAry} <- ?MODULE:module_info(exports), 
+      Test =/= module_info,
+      NAry =:= 1
    ].
 
 datalog(Datalog, Expect) ->
