@@ -1,6 +1,6 @@
 {application, datalog,
    [
-      {description, "datalog evaluator"},
+      {description, "datalog is a query language based on the logic programming paradigm"},
       {vsn,         "1.2.1"},
       {modules,     []},
       {registered,  []},
