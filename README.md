@@ -3,6 +3,7 @@
 The library is designed to formalize relation of n-ary streams. It implements an ad-hoc query engine using simplified version of general _logic programming_ paradigm.
 
 [![Build Status](https://secure.travis-ci.org/fogfish/datalog.svg?branch=master)](http://travis-ci.org/fogfish/datalog)
+[![Coverage Status](https://coveralls.io/repos/github/fogfish/datalog/badge.svg?branch=master)](https://coveralls.io/github/fogfish/datalog?branch=master)
 
 ## Key features
 
