@@ -174,7 +174,7 @@ cc_sigma(#{'@' := Gen, '_' := Head} = Sigma, Source, Lp) ->
 -spec schema(datalog:q()) -> [atom()].
 
 schema(Datalog) ->
-   lens:get(lens_head(lens:get(lens_goal(), Datalog)), Datalog).
+   [lens:get(lens_goal(), Datalog)] ++ lens:get(lens_head(lens:get(lens_goal(), Datalog)), Datalog).
 
 lens_goal() ->
    lens:c(lens:pair('?'), lens:at('@')).
