@@ -16,8 +16,8 @@
 %% @doc
 %%   datalog
 
-Nonterminals   CLAUSES GOAL HORN BODY ITEM GUARD TERMS LITS.
-Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' '_' lit symbol.
+Nonterminals   CLAUSES GOAL HORN BODY ITEM GUARD TERMS TERM.
+Terminals      '?-' ':-' '(' ')' '[' ']' '.' ',' '<' '=' '>' '!' '_' '^' '-' ':' symbol iri binary integer decimal.
 Rootsymbol     CLAUSES.
 
 
@@ -57,29 +57,51 @@ ITEM -> '.' symbol '(' ')' :
 ITEM -> '.' symbol '(' TERMS ')' :
    {{datalog, unwrap('$2')}, '$4'}.
 
-ITEM -> symbol GUARD lit :
-   {'$2', unwrap('$1'), unwrap('$3')}.
+ITEM -> symbol GUARD TERM :
+   {'$2', unwrap('$1'), '$3'}.
 
-ITEM -> symbol GUARD '(' LITS ')' :
+ITEM -> symbol GUARD '(' TERMS ')' :
    {'$2', unwrap('$1'), '$4'}.
 
-TERMS -> lit ',' TERMS :
-   [unwrap('$1') | '$3'].
-TERMS -> symbol ',' TERMS :
-   [unwrap('$1') | '$3'].
-TERMS -> '_' ',' TERMS :
-   ['_' | '$3'].
-TERMS -> lit :
-   [unwrap('$1')].
-TERMS -> symbol :
-   [unwrap('$1')].
-TERMS -> '_' :
-   ['_'].
+TERMS -> TERM ',' TERMS :
+   ['$1' | '$3'].
+TERMS -> TERM :
+   ['$1'].
 
-LITS -> lit ',' LITS :
-   [unwrap('$1') | '$3'].
-LITS -> lit :
-   [unwrap('$1')].
+%%
+%% xsd:anyURI
+TERM -> iri :
+   {iri, binary('$1')}.
+TERM -> symbol ':' symbol :
+   {iri, binary('$1'), binary('$3')}.
+
+%%
+%% xsd:string
+TERM -> binary :
+   binary('$1').
+
+%%
+%% xsd:integer
+TERM -> integer :
+   integer('$1').
+
+%%
+%% xsd:decimal
+TERM -> decimal :
+   decimal('$1').
+
+%%
+%% xsd:dateTime
+TERM -> '(' integer ',' integer ',' integer ')' :
+   {integer('$2'), integer('$4'), integer('$6')}.
+
+%TERM -> integer '-' integer '-' integer
+
+%%
+%% symbols
+TERM -> symbol :
+   atom('$1').
+
 
 %%
 %%
@@ -99,10 +121,17 @@ GUARD    -> '<' '=' :
    '=<'.
 GUARD    -> '!' '=' :
    '=/='.
-
+GUARD    -> symbol  :
+   atom('$1').
 
 %%
 %%
 Erlang code.
+
+atom({_,_,X}) -> erlang:list_to_atom(X).
+binary({_,_,X}) -> erlang:list_to_binary(X).
+integer({_,_,X}) -> erlang:list_to_integer(X).
+decimal({_,_,X}) -> erlang:list_to_float(X).
+
 
 unwrap({_,_,X}) -> X.
