@@ -48,13 +48,13 @@ Rules.
 %%
 %% xsd:integer
 %%
-(-|\+)?{DIGIT}+ :
+{DIGIT}+ :
    {token, {integer, TokenLine, TokenChars}}.
 
 %%
 %% xsd:decimal
 %%
-(-|\+)?{DIGIT}+\.{DIGIT}+ :
+{DIGIT}+\.{DIGIT}+ :
    {token, {decimal, TokenLine, TokenChars}}.
 
 %%
@@ -66,7 +66,7 @@ Rules.
 \:\- :
    {token,{list_to_atom(TokenChars),TokenLine}}.
 
-[()\[\]_<=>!.,^\-\:] :
+[()\[\]{}_<=>!.,^\-\:] :
    {token,{list_to_atom(TokenChars),TokenLine}}.
 
 {WS}+  : skip_token.

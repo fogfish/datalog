@@ -16,11 +16,12 @@
 %% @doc
 %%   datalog
 
-Nonterminals   CLAUSES GOAL HORN BODY ITEM GUARD TERMS TERM.
-Terminals      '?-' ':-' '(' ')' '[' ']' '.' ',' '<' '=' '>' '!' '_' '^' '-' ':' symbol iri binary integer decimal.
+Nonterminals   CLAUSES GOAL HORN BODY ITEM GUARD TERMS TERM PAIRS LIT.
+Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' '_' '^' '-' ':' '[' ']' '{' '}' symbol iri binary integer decimal.
 Rootsymbol     CLAUSES.
 
-
+%%
+%%
 CLAUSES -> GOAL CLAUSES :
    ['$1' | '$2'].
 CLAUSES -> HORN CLAUSES :
@@ -28,80 +29,124 @@ CLAUSES -> HORN CLAUSES :
 CLAUSES -> '$empty' :
    [].
 
+%%
+%%
 GOAL -> '?-' symbol '(' TERMS ')' '.' :
-   {unwrap('$2'), '$4'}.
+   {atom('$2'), '$4'}.
 
+%%
+%%
 HORN -> symbol '(' TERMS ')' ':-' BODY '.' :
-   {unwrap('$1'), '$3', '$6'}.
+   {atom('$1'), '$3', '$6'}.
 
+%%
+%%
 BODY -> ITEM ',' BODY :
    ['$1' | '$3'].
 BODY -> ITEM :
    ['$1'].
 
+%%
+%%
 ITEM -> symbol '(' ')' :
-   {unwrap('$1'), []}.
+   {atom('$1'), []}.
 
 ITEM -> symbol '(' TERMS ')' :
-   {unwrap('$1'), '$3'}.
+   {atom('$1'), '$3'}.
 
 ITEM -> symbol '.' symbol '(' ')' :
-   {{unwrap('$1'), unwrap('$3')}, []}.
+   {{atom('$1'), atom('$3')}, []}.
 
 ITEM -> symbol '.' symbol '(' TERMS ')' :
-   {{unwrap('$1'), unwrap('$3')}, '$5'}.
+   {{atom('$1'), atom('$3')}, '$5'}.
 
 ITEM -> '.' symbol '(' ')' :
-   {{datalog, unwrap('$2')}, []}.
+   {{datalog, atom('$2')}, []}.
 
 ITEM -> '.' symbol '(' TERMS ')' :
-   {{datalog, unwrap('$2')}, '$4'}.
+   {{datalog, atom('$2')}, '$4'}.
 
 ITEM -> symbol GUARD TERM :
-   {'$2', unwrap('$1'), '$3'}.
+   {'$2', atom('$1'), '$3'}.
 
-ITEM -> symbol GUARD '(' TERMS ')' :
-   {'$2', unwrap('$1'), '$4'}.
-
+%%
+%%
 TERMS -> TERM ',' TERMS :
    ['$1' | '$3'].
 TERMS -> TERM :
    ['$1'].
 
 %%
+%%
+TERM -> '{' PAIRS '}' :
+   maps:from_list('$2').
+
+TERM -> '(' TERMS ')' :
+   erlang:list_to_tuple('$2').
+
+TERM -> '[' TERMS ']' :
+   '$2'.
+
+TERM -> LIT :
+   '$1'.
+
+%%
+%%
+PAIRS -> symbol ':' TERM ',' PAIRS :
+   [{binary('$1'), '$3'} | '$5'].
+
+PAIRS -> symbol ':' TERM :
+   [{binary('$1'), '$3'}].
+
+
+%%
 %% xsd:anyURI
-TERM -> iri :
+LIT -> iri :
    {iri, binary('$1')}.
-TERM -> symbol ':' symbol :
+LIT -> symbol ':' symbol :
    {iri, binary('$1'), binary('$3')}.
 
 %%
 %% xsd:string
-TERM -> binary :
+LIT -> binary :
    binary('$1').
 
 %%
 %% xsd:integer
-TERM -> integer :
+LIT -> integer :
    integer('$1').
+LIT -> '-' integer :
+   -integer('$2').
 
 %%
 %% xsd:decimal
-TERM -> decimal :
+LIT -> decimal :
    decimal('$1').
+
+LIT -> '-' decimal :
+   -decimal('$2').
 
 %%
 %% xsd:dateTime
-TERM -> '(' integer ',' integer ',' integer ')' :
-   {integer('$2'), integer('$4'), integer('$6')}.
+LIT -> integer '-' integer '-' integer symbol integer ':' integer ':' integer symbol :
+   timestamp({{integer('$1'), integer('$3'), integer('$5')}, {integer('$7'), integer('$9'), integer('$11')}}).
 
-%TERM -> integer '-' integer '-' integer
+LIT -> integer '-' integer '-' integer :
+   {{integer('$1'), integer('$3'), integer('$5')}, {0, 0, 0}}.
+
+LIT -> integer '-' integer :
+   {{integer('$1'), integer('$3'), 0}, {0, 0, 0}}.
+
+LIT -> '-' '-' integer '-' integer :
+   {{0, integer('$3'), integer('$5')}, {0, 0, 0}}.
+
+LIT -> integer ':' integer ':' integer symbol :
+   {{0, 0, 0}, {integer('$1'), integer('$3'), integer('$5')}}.
 
 %%
 %% symbols
-TERM -> symbol :
+LIT -> symbol :
    atom('$1').
-
 
 %%
 %%
@@ -128,10 +173,18 @@ GUARD    -> symbol  :
 %%
 Erlang code.
 
-atom({_,_,X}) -> erlang:list_to_atom(X).
-binary({_,_,X}) -> erlang:list_to_binary(X).
-integer({_,_,X}) -> erlang:list_to_integer(X).
-decimal({_,_,X}) -> erlang:list_to_float(X).
+atom({_,_,X}) ->
+   erlang:list_to_atom(X).
 
+binary({_,_,X}) ->
+   erlang:list_to_binary(X).
 
-unwrap({_,_,X}) -> X.
+integer({_,_,X}) ->
+   erlang:list_to_integer(X).
+
+decimal({_,_,X}) ->
+   erlang:list_to_float(X).
+
+timestamp({{_, _, _}, {_, _, _}} = T) -> 
+   Sec = calendar:datetime_to_gregorian_seconds(T) - 62167219200,
+   {Sec div 1000000, Sec rem 1000000, 0}.

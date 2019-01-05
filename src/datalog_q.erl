@@ -28,6 +28,7 @@
 -spec native([{_, _, _}]) -> datalog:q().
 
 native(Horns) ->
+   io:format("==> ~p~n", [Horns]),
    lists:foldr(
       fun({Horn, Head, Body}, Datalog) ->
          % datalog complaint body consists of predicates and built-in filters.
