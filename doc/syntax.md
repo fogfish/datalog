@@ -44,12 +44,19 @@ xsd:integer | `-?\d+` | `123`
 xsd:decimal | `-?\d+.\d+` | `12.3`
 || `"-?\d+.\d+"^^xsd:decimal` | `"12.3"^^xsd:decimal`
 xsd:boolean | `true\|false` | `true`
-xsd:datetime | `\(\d+,\d+,\d+\)` | `(154, 7623, 23)`
-|| ISO8601 | `2007-04-05T14:30:00Z`
+xsd:datetime | ISO8601 | `2007-04-05T14:30:00Z`
 xsd:date | ISO8601 | `2007-04-05`
 xsd:time | ISO8601 | `14:30:00Z`
 xsd:yearmonth | ISO8601 | `2007-04`
 xsd:monthdate | ISO8601 | `--04-05`
+
+The library also implements container data types (tuples, maps, lists) usable as constants
+
+Data type | Syntax | Example
+--- | --- | ---
+rdf:seq |  `( ... )` | `(154, 7623, 23)`
+rdf:map |  `{ ... }` | `{type:"Point", coordinates:[21.3, 60.2]}`
+rdf:list|  `[ ... ]` | `[1, "a", 3.2]`
 
 
 ## Variables
