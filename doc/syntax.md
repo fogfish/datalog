@@ -43,7 +43,7 @@ xsd:integer | `-?\d+` | `123`
 || `"-?\d+"^^xsd:integer` | `"123"^^xsd:integer`
 xsd:decimal | `-?\d+.\d+` | `12.3`
 || `"-?\d+.\d+"^^xsd:decimal` | `"12.3"^^xsd:decimal`
-xsd:boolean | `true | false` | `true`
+xsd:boolean | `true\|false` | `true`
 xsd:datetime | `\(\d+,\d+,\d+\)` | `(154, 7623, 23)`
 || ISO8601 | `2007-04-05T14:30:00Z`
 xsd:date | ISO8601 | `2007-04-05`
