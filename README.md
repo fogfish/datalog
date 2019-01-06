@@ -1,6 +1,6 @@
 # datalog
 
-Datalog is a query language based on the logic programming paradigm. The library is designed to formalize relation of n-ary streams. It implements an ad-hoc query engine using simplified version of general _logic programming_ paradigm.
+Datalog is a query language based on the logic programming paradigm. The library is designed to formalize relation of n-ary streams. It implements an ad-hoc query engine using simplified version of general _logic programming_ paradigm. The library facilitates development of data integration, information exchange and semantic web applications.
 
 [![Build Status](https://secure.travis-ci.org/fogfish/datalog.svg?branch=master)](http://travis-ci.org/fogfish/datalog)
 [![Coverage Status](https://coveralls.io/repos/github/fogfish/datalog/badge.svg?branch=master)](https://coveralls.io/github/fogfish/datalog?branch=master)
@@ -16,10 +16,10 @@ Datalog is a query language based on the logic programming paradigm. The library
 The logic program consists of finite set of rules and large volume of ground facts -- knowledge. The rules are used to deduce new facts from other facts (built new relations). The [Horn clauses](https://en.wikipedia.org/wiki/Horn_clause) formally defines rules (first-order formula)
 
 ```
-L0 :- L1, ..., Ln
+L0 :- L1 ^ ... ^ Ln
 ```
 
-`L0` is a rule head, it is a producer of new relation (facts). The body is a conjunction of existed relations, built-in functions and filters. Each `Li` is a predicate expression consist of predicate symbol and terms such as `p(t1, ..., tk)`, terms are either a literal constant or a variable. The predicate expression refers to relation of arbitrary arity - stream of tuples; terms range over this stream of tuples. Body predicates refers either to derived relations or ground facts. The predicates with common variables give rise to join. Ground facts are physically stored in external memory and accesses using streams abstractions.
+`L0` is a rule head, it is a producer of new relation (facts). The body is a conjunction of predicates. Each `Li` is a predicate expression consist of predicate symbol and terms such as `p(t1, ..., tk)`, terms are either a literal constant or a variable. The predicate expression refers to relation of arbitrary arity - stream of tuples; terms range over this stream of tuples. Body predicates refers either to derived relations or ground facts. The predicates with common variables give rise to join. Ground facts are physically stored in external memory and accesses using streams abstractions.
 
 A head is a new derived relation, deducted through the _logical program_ (body of horn clause) and ground facts. It is not explicitly persisted anywhere and corresponds the relation view (projection). The materialization of these view is the main task of this library.
 
