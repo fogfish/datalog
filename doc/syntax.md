@@ -3,10 +3,10 @@
 > Datalog is a declarative logic programming language that syntactically is a subset of Prolog. It is often used as a query language for deductive databases... Datalog is not Turing complete, and is thus used as a domain-specific language. Unlike in Prolog, Datalog queries on finite sets are guaranteed to terminate.
 > https://en.wikipedia.org/wiki/Datalog
 
-This document depicts a datalog syntax supported by this library and its extensions that supports Semantic Web and Erlang runtime.
+This document depicts a datalog syntax supported by this library and its extensions that implements enhancement for Semantic Web and bindings with Erlang runtime.
 
-The datalog program consist of finite set of rules and reference to ground fact, which are stored in external memory. The rules are used to deduce new facts from other facts. It is important to understand: 
-* there are no functions symbols in datalog, each predicate symbol refers relation of arbitrary arity.
+The datalog program consist of finite set of rules and references to ground facts, which are stored in external memory. The rules are used to deduce new facts from other facts. It is important to understand: 
+* there are no functions symbols in datalog, each predicate symbol refers to relation of arbitrary arity.
 * datalog has a purely declarative semantics - the order of clauses is irrelevant.
 
 ## Rules
@@ -17,9 +17,9 @@ The [Horn clauses](https://en.wikipedia.org/wiki/Horn_clause) formally defines d
 p₀(ẋ₀) :- p₁(ẋ₁), ... , pₙ(ẋₙ).
 ```
 
-`p₀` is a rule head, which is a newly derived relation, deducted through horn clauses evaluation. The body is a conjunction of predicates `p₁ , ... , pₙ`. Each predicate refers to either derived or ground relation of arity equals to `|ẋ|`. The language support primitive predicates using infix notation, e.g. equality predicate `x = 1`. 
+`p₀` is a rule head, which represents a newly derived relation, deducted through horn clauses evaluation. The body is a conjunction of predicates `p₁ , ... , pₙ`. Each predicate refers to either derived or ground relation of arity equals to `|ẋ|`. The language support primitive predicates using infix notation, e.g. equality predicate `x = 1`. 
 
-`ẋ₀ , ... , ẋₙ` are vector of variables and constants. Every variable of `ẋ₀` must occur in `ẋ₁ , ... , ẋₙ` so that rule is range restricted. The predicates with common variables give rise to join of relations. Vector `|ẋ|` facilitates predicate to map a relation from domain Dⁿ to boolean values so that evaluator is able to holds in each relation that obeys rules.
+`ẋ₀ , ... , ẋₙ` are vector of variables and constants. Every variable of `ẋ₀` must occur in `ẋ₁ , ... , ẋₙ` so that rule is range restricted. The predicates with common variables give rise to join of relations. Vector `|ẋ|` facilitates predicate to map a relation from domain Dⁿ to boolean values so that program is able to holds in each relation that obeys rules.
 
 A datalog program is a finite set of rules.
 
@@ -31,7 +31,7 @@ h(x, z) :- a(x, y), b(y, z).
 
 ## Constants
 
-Constants are predicate terms that do not change its value during the evaluation of program. Constants facilitate in pattern matching of ground relations while evaluating a programs. The library uses [semantic types](https://github.com/fogfish/semantic/blob/master/doc/datatype.md) to express constants
+Constants are predicate terms that do not change its value during the evaluation of program. Constants facilitate in pattern matching of ground relations while evaluating a programs. The library uses [semantic types](https://github.com/fogfish/semantic/blob/master/doc/datatype.md) to express constants. The usage of semantic types improves ambiguous translations of string literals to type system used at external memory. 
 
 Data type | Syntax | Example
 --- | --- | ---
@@ -59,27 +59,81 @@ rdf:map |  `{ ... }` | `{type:"Point", coordinates:[21.3, 60.2]}`
 rdf:list|  `[ ... ]` | `[1, "a", 3.2]`
 
 
+Example of constants
+
+```
+h(x) :- a("example", x), b(x, 10.0).
+h(x) :- a(<http://example.com/a>, x), b(x, y), x = example:a.
+```
+
 ## Variables
+
+Variable consists of all finite alphanumeric characters and digits beginning with an upper case letter, says datalog syntax. The library relaxes an upper case requirement for variables due to internal AST representation where variable becomes an atom. Variable are used to lift positional values of relation to a new one, and so on.
+
+Sometimes, you need to skip or ignore value of relation, use a black symbol (\_) to mark unused positions. 
+
+Example of variables
+
+```
+h(z) :- a(_, y), b(y, z).
+```
 
 
 ## Predicates
 
 > In a logic programming view, the term “predicate” is used as synonym for “relation (name)”.
 
+Let's take an example `p₁(x₁ , ... , xₙ)`. `p₁` the name of relation, which is either correspond to ground truths one maintained by external storage or logical one derived while evaluating a program. `x₁ , ... , xₙ` terms either variable or constants.
 
-## horn clause
-
-## inline literal
 ```
-h(z) :- a("x", y), b(y, z). 
-h(z) :- a(100, y), b(y, z). 
-h(z) :- a(1.0, y), b(y, z). 
+actors(id, name).
+movies(id, title, year, cast).
+
+casting(title, name) :- movies(_, title, year, cast), actors(cast, name), year < 1984.
 ```
 
-## match anything
+Ground truths relation `actors` consists of tuples `(id, name)`, relation `movies` is `(id, title, year, cast)`. The derived relation `casting` joins `movies` and `actors` relations, restricts `movies` to instance where `year` less then 1984. Values of `title` and `name` is lifted to derived relation.
+
+**Ground-truths**
+
 ```
-h(z) :- a(_, y), b(y, z).
+p( ... ).
 ```
+
+**Derived relation**
+
+```
+p( ... ) :- ... .
+```
+
+**Semantic Web** predicates are compact IRIs, its just annotates relations as an instance of a class (rdf:type).
+
+```
+schema:thing( ... ) :- foaf:person( ... foaf:name ), foaf:name > "A", foaf:name < "B".
+```
+
+**Native** predicates refers to ground truths relations implemented by Erlang functions. The syntax uses dot (.) to separate references to native modules and functions. 
+
+```
+module.function( ... ).
+.function( ... ).
+``` 
+
+**Built-in** are native predicates where module definition is by passed, they are implemented by the evaluator. 
+
+```
+.unique( ... ) // a predicate ensures unique term(s) within the stream
+.flat( ... )   // a predicate flatmap identity of term(s) over stream
+.eq( ... )     // a predicate is a boolean predicates over stream terms
+.ne( ... )
+.lt( ... )
+.gt( ... )
+.le( ... )
+.ge( ... )
+``` 
+
+**Infix** predicates
+
 
 ## guards
 ```
@@ -88,17 +142,6 @@ h(x,z) :- a(x, y), b(y, z), x = ("x", "y", "z").
 h(x,z) :- a(x, y), b(y, z), x > 100.
 h(x,z) :- a(x, y), b(y, z), x < 1.0.
 h(x,z) :- a(x, y), b(y, z), x >= 1.0, x =< 100.
-```
-
-## bif
-```
-h(x,z) :- .a(x, y), .b(y, z).
-h(x,z) :- mod.a(x, y), mod.b(y, z).
-```
-
-## semantic web
-```
-foaf:person(rdf:id, foaf:name) :- foaf:person(rdf:id, foaf:name), foaf:name > "A", foaf:name < "B".
 ```
 
 ## json-ld

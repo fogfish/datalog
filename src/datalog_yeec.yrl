@@ -16,7 +16,7 @@
 %% @doc
 %%   datalog
 
-Nonterminals   CLAUSES GOAL HORN BODY ITEM GUARD TERMS TERM PAIRS LIT.
+Nonterminals   CLAUSES GOAL HORN BODY ITEM PREDICATE TERMS TERM PAIRS LIT GUARD.
 Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' '_' '^' '-' ':' '[' ']' '{' '}' symbol iri binary integer decimal.
 Rootsymbol     CLAUSES.
 
@@ -48,26 +48,28 @@ BODY -> ITEM :
 
 %%
 %%
-ITEM -> symbol '(' ')' :
-   {atom('$1'), []}.
+ITEM -> PREDICATE '(' ')' :
+   {'$1', []}.
 
-ITEM -> symbol '(' TERMS ')' :
-   {atom('$1'), '$3'}.
-
-ITEM -> symbol '.' symbol '(' ')' :
-   {{atom('$1'), atom('$3')}, []}.
-
-ITEM -> symbol '.' symbol '(' TERMS ')' :
-   {{atom('$1'), atom('$3')}, '$5'}.
-
-ITEM -> '.' symbol '(' ')' :
-   {{datalog, atom('$2')}, []}.
-
-ITEM -> '.' symbol '(' TERMS ')' :
-   {{datalog, atom('$2')}, '$4'}.
+ITEM -> PREDICATE '(' TERMS ')' :
+   {'$1', '$3'}.
 
 ITEM -> symbol GUARD TERM :
    {'$2', atom('$1'), '$3'}.
+
+%%
+%%
+PREDICATE -> symbol :
+   atom('$1').
+
+PREDICATE -> symbol ':' symbol :
+  erlang:list_to_atom( unwrap('$1') ++ ":" ++ unwrap('$3') ).
+
+PREDICATE -> symbol '.' symbol :
+   {atom('$1'), atom('$3')}.
+
+PREDICATE -> '.' symbol :
+   {datalog, atom('$2')}.
 
 %%
 %%
@@ -172,6 +174,9 @@ GUARD    -> symbol  :
 %%
 %%
 Erlang code.
+
+unwrap({_, _, X}) ->
+   X.
 
 atom({_,_,X}) ->
    erlang:list_to_atom(X).
