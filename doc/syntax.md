@@ -3,7 +3,7 @@
 > Datalog is a declarative logic programming language that syntactically is a subset of Prolog. It is often used as a query language for deductive databases... Datalog is not Turing complete, and is thus used as a domain-specific language. Unlike in Prolog, Datalog queries on finite sets are guaranteed to terminate.
 > https://en.wikipedia.org/wiki/Datalog
 
-This document depicts a datalog syntax supported by this library and its extensions that implements enhancement for Semantic Web and bindings with Erlang runtime.
+This document depicts a datalog syntax supported by the library and it extensions that implements enhancement for Semantic Web and bindings with Erlang runtime.
 
 The datalog program consist of finite set of rules and references to ground facts, which are stored in external memory. The rules are used to deduce new facts from other facts. It is important to understand: 
 * there are no functions symbols in datalog, each predicate symbol refers to relation of arbitrary arity.
@@ -68,7 +68,7 @@ h(x) :- a(<http://example.com/a>, x), b(x, y), x = example:a.
 
 ## Variables
 
-Variable consists of all finite alphanumeric characters and digits beginning with an upper case letter, says datalog syntax. The library relaxes an upper case requirement for variables due to internal AST representation where variable becomes an atom. Variable are used to lift positional values of relation to a new one, and so on.
+Variable consists of all finite alphanumeric characters and digits beginning with an upper case letter, says datalog syntax. The library relaxes an upper case requirement for variables due to internal AST representation where variable becomes an atom. Variable are used to lift positional values of relation to a new one, and so on. The library support JSON-LD flavored syntax for variable name e.g. `@id`, `@type`.
 
 Sometimes, you need to skip or ignore value of relation, use a black symbol (\_) to mark unused positions. 
 
@@ -76,8 +76,8 @@ Example of variables
 
 ```
 h(z) :- a(_, y), b(y, z).
+h(@id,z) :- a(@id, @type), b(@type, z).
 ```
-
 
 ## Predicates
 
@@ -92,9 +92,9 @@ movies(id, title, year, cast).
 casting(title, name) :- movies(_, title, year, cast), actors(cast, name), year < 1984.
 ```
 
-Ground truths relation `actors` consists of tuples `(id, name)`, relation `movies` is `(id, title, year, cast)`. The derived relation `casting` joins `movies` and `actors` relations, restricts `movies` to instance where `year` less then 1984. Values of `title` and `name` is lifted to derived relation.
+Ground truths relation `actors` consists of tuples `(id, name)`, another ground truth relation `movies` is `(id, title, year, cast)`. The derived relation `casting` joins `movies` and `actors` relations and restricts `movies` to instance where `year` less then 1984. Values of `title` and `name` is lifted to derived relation.
 
-**Ground-truths**
+**Ground-truths** predicate provides reference to external memory and mapping of external tuples.  
 
 ```
 p( ... ).
@@ -106,7 +106,7 @@ p( ... ).
 p( ... ) :- ... .
 ```
 
-**Semantic Web** predicates are compact IRIs, its just annotates relations as an instance of a class (rdf:type).
+**Semantic Web** predicates are compact IRIs, its just annotates relations as an instance of a class (rdf:type), nothing more the syntax sugar. 
 
 ```
 schema:thing( ... ) :- foaf:person( ... foaf:name ), foaf:name > "A", foaf:name < "B".
@@ -132,19 +132,15 @@ module.function( ... ).
 .ge( ... )
 ``` 
 
-**Infix** predicates
+**Infix** predicates, also know as guards, restricts terms of other relations. They always takes left argument a variable and right argument as constant.
 
+```
+x = 10
+x > 10
+x < 10
+x >= 10
+x =< 10
+x != 10
+x in (10, 20, 30)
+``` 
 
-## guards
-```
-h(x,z) :- a(x, y), b(y, z), x = "x".
-h(x,z) :- a(x, y), b(y, z), x = ("x", "y", "z").
-h(x,z) :- a(x, y), b(y, z), x > 100.
-h(x,z) :- a(x, y), b(y, z), x < 1.0.
-h(x,z) :- a(x, y), b(y, z), x >= 1.0, x =< 100.
-```
-
-## json-ld
-```
-h(@id,z) :- a(@id, @type), b(@type, z).
-```

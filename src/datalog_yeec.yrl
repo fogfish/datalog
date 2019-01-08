@@ -39,6 +39,12 @@ GOAL -> '?-' symbol '(' TERMS ')' '.' :
 HORN -> symbol '(' TERMS ')' ':-' BODY '.' :
    {atom('$1'), '$3', '$6'}.
 
+HORN -> symbol '(' TERMS ')' '.' :
+   {atom('$1'), '$3', []}.
+
+HORN -> symbol '(' ')' '.' :
+   {atom('$1'), [], []}.
+
 %%
 %%
 BODY -> ITEM ',' BODY :
