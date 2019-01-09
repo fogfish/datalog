@@ -127,7 +127,7 @@ flatten({[H|T], Term, Stream}) ->
 -spec eq(datalog:predicate()) -> _.
 
 eq(#{'_' := [A, B]}) ->
-   fun(_) ->
+   fun(_, _) ->
       fun(Stream) ->
          stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =:= Bx end, Stream)
       end
@@ -136,7 +136,7 @@ eq(#{'_' := [A, B]}) ->
 -spec ne(datalog:predicate()) -> _.
 
 ne(#{'_' := [A, B]}) ->
-   fun(_) ->
+   fun(_, _) ->
       fun(Stream) ->
          stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =/= Bx end, Stream)
       end

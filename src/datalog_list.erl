@@ -29,8 +29,12 @@
 %% example of stream generator, it produces a stream of tuple of integers
 %%
 %% a(x,y) :- .stream(...)
+stream([], [X1]) -> f(X1);
+stream([], [X1, X2]) -> f(X1, X2);
+stream([], [X1, X2, X3]) -> f(X1, X2, X3);
+
 stream([Len|Gen], SubQ) ->
-   fun(List) ->
+   fun(_List, _) ->
       stream:zip([gen(Len, N, Filter) || {N, Filter} <- lists:zip(Gen, SubQ)])
    end.
 

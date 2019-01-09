@@ -128,7 +128,7 @@ c_list(Source, [{'?', #{'@' := Goal, '_' := Head}} | Datalog]) ->
    Lprogram = lists:foldl(fun(Horn, LP) -> cc_horn(Horn, Source, LP) end, #{}, Datalog),
    Fun = maps:get(Goal, Lprogram),
    fun(Env) ->
-      (Fun(Env))(Head)
+      (Fun(Env, Lprogram))(Head)
    end.
 
 c_maps(Source, [{'?', #{'@' := Goal, '_' := Head}} | Datalog]) ->
@@ -138,7 +138,7 @@ c_maps(Source, [{'?', #{'@' := Goal, '_' := Head}} | Datalog]) ->
    fun(Env) ->
       stream:map(
          fun(Tuple) -> maps:from_list( lists:zip(Vars, Tuple) ) end,
-         (Fun(Env))(Head)
+         (Fun(Env, Lprogram))(Head)
       )
    end.
 
@@ -149,7 +149,13 @@ cc_horn({Id, [Head, #{'@' := {datalog, select}, '_' := Keys} = Sigma | Body]}, S
    Lp#{Id => cc_sigma(Sigma#{'_' => Head, '.' => Keys, '>' => Body}, Source, Lp)};
 
 cc_horn({Id, [Head | Body]}, Source, Lp) ->
-   Lp#{Id => datalog_vm:horn(Head, [cc_sigma(Sigma, Source, Lp) || Sigma <- Body])}.
+   Lp#{Id => datalog_vm:horn(Head, [cc_sigma(Sigma, Source, Lp) || Sigma <- Body])};
+
+cc_horn({Id, {[Head | BodyA], [_ | BodyB]}}, Source, Lp) ->
+   A = datalog_vm:horn(Head, [cc_sigma(Sigma, Source, Lp) || Sigma <- BodyA]),
+   B = datalog_vm:horn(Head, [cc_sigma(Sigma, Source, Lp) || Sigma <- BodyB]),
+   Lp#{Id => datalog_vm:union(A, B)}.
+
 
 cc_sigma(#{'@' := {datalog, stream}} = Sigma, Source, _) ->
    datalog_vm:stream(Sigma#{'@' => fun Source:stream/2});
@@ -163,8 +169,10 @@ cc_sigma(#{'@' := {datalog, Fun}} = Sigma, Source, _) ->
 cc_sigma(#{'@' := Gen, '_' := Head} = Sigma, Source, Lp) ->
    case maps:get(Gen, Lp, undefined) of
       undefined ->
-         N = length(Head),
-         Sigma#{'@' => datalog_vm:stream(Sigma#{'@' => fun Source:Gen/N})};
+         % io:format("==[ sigma undefined ]=> ~p~n", [Gen]),
+         % N = length(Head),
+         % Sigma#{'@' => datalog_vm:stream(Sigma#{'@' => fun Source:Gen/N})};
+         Sigma;
       Ref ->
          Sigma#{'@' => Ref}
    end.

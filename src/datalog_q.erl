@@ -28,20 +28,30 @@
 -spec native([{_, _, _}]) -> datalog:q().
 
 native(Horns) ->
-   lists:foldr(
-      fun({Horn, Head, Body}, Datalog) ->
-         % datalog complaint body consists of predicates and built-in filters.
-         % predicate is converted to `-type pattern()`. The filters are interleaved 
-         % into pattern so that sigma function can construct stream of ground facts.
-         {Pattern, Filter} = lists:partition(fun(X) -> size(X) =:= 2 end, Body),
-         [{Horn, [Head | ast_to_body(Pattern, Filter)]} | Datalog];
+   union(
+      lists:foldr(
+         fun({Horn, Head, Body}, Datalog) ->
+            % datalog complaint body consists of predicates and infix predicates (built-in filters).
+            % predicate is converted to `-type pattern()`. The filters are interleaved 
+            % into pattern so that sigma function can construct stream of ground facts.
+            {Pattern, Filter} = lists:partition(fun(X) -> size(X) =:= 2 end, Body),
+            [{Horn, [Head | ast_to_body(Pattern, Filter)]} | Datalog];
 
-      ({Horn, Head}, Datalog) ->
-         [{'?', #{'@' => Horn, '_' => Head}} | Datalog]
-      end,
-      [],
-      Horns 
+         ({Horn, Head}, Datalog) ->
+            [{'?', #{'@' => Horn, '_' => Head}} | Datalog]
+         end,
+         [],
+         Horns 
+      )
    ).
+
+union([{Horn, BodyA}, {Horn, BodyB} | Tail]) ->
+   [{Horn, {BodyA, BodyB}} | union(Tail)];
+union([Head | Tail]) ->
+   [Head | union(Tail)];
+union([]) ->
+   [].
+
 
 %%
 %%

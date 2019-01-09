@@ -22,16 +22,29 @@
 -include_lib("datum/include/datum.hrl").
 
 -export([
+   union/2,
    horn/2,
    stream/1
 ]).
+
+%%
+%%
+union(A, B) ->
+   fun(Env, Lp) ->
+      HornA = A(Env, Lp),
+      HornB = B(Env, Lp),
+      fun(SubQ) ->
+         stream:'++'(HornA(SubQ), HornB(SubQ))
+      end
+   end.
 
 
 %%
 %%
 horn(Head, Horn) ->
-   fun(Env) ->
-      [HHorn | THorn] = [Spec#{'@' => F(Env)} || #{'@' := F} = Spec <- Horn],
+   io:format("=[ horn ]=> ~p~n", [Horn]),
+   fun(Env, Lp) ->
+      [HHorn | THorn] = [Spec#{'@' => env_call(F, Lp, Env)} || #{'@' := F} = Spec <- Horn],
       fun(SubQ) ->
          Heap   = maps:from_list(lists:zip(Head, SubQ)),
          Stream = join(eval(Heap, HHorn), THorn),
@@ -43,6 +56,14 @@ horn(Head, Horn) ->
          )
       end
    end.
+
+env_call(F, Lp, Env) when is_atom(F) ->
+   Fun = maps:get(F, Lp),
+   fun(SubQ) ->
+      ( Fun(Env, Lp) )(SubQ)
+   end;
+env_call(F, Lp, Env) ->
+   F(Env, Lp).
 
 join(Stream, [#{'.' := pipe, '@' := Pipe} | THorn]) ->
    join(Pipe(Stream), THorn);
@@ -88,37 +109,37 @@ term(T, _) ->
 %%
 %% evaluate stream 
 stream(#{'.' := Keys, '>' := Spec, '@' := Gen}) ->
-   fun(Env) ->
+   fun(Env, _Lp) ->
       fun(SubQ) -> (Gen(Keys, SubQ, Spec))(Env) end
    end;
 
 stream(#{'.' := Keys, '@' := Gen}) ->
-   fun(Env) ->
+   fun(Env, _Lp) ->
       fun(SubQ) -> (Gen(Keys, SubQ))(Env) end
    end;
 
 stream(#{'_' := [_], '@' := Gen}) ->
-   fun(Env) ->
+   fun(Env, _Lp) ->
       fun([X1]) -> (Gen(X1))(Env) end
    end;
 
 stream(#{'_' := [_, _], '@' := Gen}) ->
-   fun(Env) ->
+   fun(Env, _Lp) ->
       fun([X1, X2]) -> (Gen(X1, X2))(Env) end
    end;
 
 stream(#{'_' := [_, _, _],'@' := Gen}) ->
-   fun(Env) ->
+   fun(Env, _Lp) ->
       fun([X1, X2, X3]) -> (Gen(X1, X2, X3))(Env) end
    end;
 
 stream(#{'_' := [_, _, _, _], '@' := Gen}) ->
-   fun(Env) ->
+   fun(Env, _Lp) ->
       fun([X1, X2, X3, X4]) -> (Gen(X1, X2, X3, X4))(Env) end
    end;
 
 stream(#{'_' := [_, _, _, _, _], '@' := Gen}) ->
-   fun(Env) ->
+   fun(Env, _Lp) ->
       fun([X1, X2, X3, X4, X5]) -> (Gen(X1, X2, X3, X4, X5))(Env) end
    end.
 
