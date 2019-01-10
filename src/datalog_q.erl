@@ -47,6 +47,8 @@ native(Horns) ->
 
 union([{Horn, BodyA}, {Horn, BodyB} | Tail]) ->
    [{Horn, {BodyA, BodyB}} | union(Tail)];
+union([{Horn, BodyA}, {Horn, BodyB}, {Horn, BodyC} | Tail]) ->
+   [{Horn, {BodyA, BodyB, BodyC}} | union(Tail)];
 union([Head | Tail]) ->
    [Head | union(Tail)];
 union([]) ->

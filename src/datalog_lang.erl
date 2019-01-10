@@ -51,7 +51,8 @@ filter(With, Pattern)
 filter(With, Pattern) ->
    filter(With, [{'=:=', Pattern}]).
 
-
+filter(With, Lens, '_', Stream) ->
+   Stream;
 filter(With, Lens, Filter, Stream) ->
    With(fun(X) -> filter_check(Lens(X), Filter) end, Stream).
 
@@ -71,7 +72,7 @@ filter_check(B, {'=/=', A}) -> B =/= A.
 -spec unique(datalog:predicate()) -> _.
 
 unique(#{'_' := Head}) ->   
-   fun(_) ->
+   fun(_, _) ->
       fun(Stream) ->
          stream:unfold(fun uniq/1, {?SBF, Head, Stream})
       end

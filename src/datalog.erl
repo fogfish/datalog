@@ -20,6 +20,7 @@
 %%
 %% datalog interface
 -export([
+   t/0,
    q/2,
    p/1,
    c/2,
@@ -54,6 +55,29 @@
 %% sigma function (@todo: define types)
 -type eval()    :: fun( (_) -> datum:stream() ).
 -type heap()    :: fun( (map()) -> eval() ).
+
+
+%%
+%% stream based recursion
+t() ->
+   stream:unfold(fun tt/1, [stream:build([1,2,3])]).
+
+tt([undefined]) ->
+   undefined;
+
+tt([undefined | Stack]) ->
+   tt(Stack);
+
+tt([H | T]) ->
+   spin(stream:head(H), [stream:tail(H) | T]).
+
+spin(X, Stack) when X < 100 ->
+   {X, [rec(X) | Stack]};
+spin(X, Stack) ->
+   {X, Stack}.
+
+rec(X) ->
+   stream:build([X * 10, X * 10, X * 10]).
 
 
 %%
@@ -127,7 +151,9 @@ c(Source, Datalog, Opts) ->
 c_list(Source, [{'?', #{'@' := Goal, '_' := Head}} | Datalog]) ->
    Lprogram = lists:foldl(fun(Horn, LP) -> cc_horn(Horn, Source, LP) end, #{}, Datalog),
    Fun = maps:get(Goal, Lprogram),
+   io:format("==> ~p~n", [Lprogram]),
    fun(Env) ->
+      erlang:put(sbf, sbf:new(128, 0.0001)),
       (Fun(Env, Lprogram))(Head)
    end.
 
@@ -151,10 +177,16 @@ cc_horn({Id, [Head, #{'@' := {datalog, select}, '_' := Keys} = Sigma | Body]}, S
 cc_horn({Id, [Head | Body]}, Source, Lp) ->
    Lp#{Id => datalog_vm:horn(Head, [cc_sigma(Sigma, Source, Lp) || Sigma <- Body])};
 
-cc_horn({Id, {[Head | BodyA], [_ | BodyB]}}, Source, Lp) ->
-   A = datalog_vm:horn(Head, [cc_sigma(Sigma, Source, Lp) || Sigma <- BodyA]),
-   B = datalog_vm:horn(Head, [cc_sigma(Sigma, Source, Lp) || Sigma <- BodyB]),
-   Lp#{Id => datalog_vm:union(A, B)}.
+cc_horn({Id, {[HeadA | BodyA], [HeadB | BodyB]}}, Source, Lp) ->
+   A = datalog_vm:horn(HeadA, [cc_sigma(Sigma, Source, Lp) || Sigma <- BodyA]),
+   B = datalog_vm:horn(HeadB, [cc_sigma(Sigma, Source, Lp) || Sigma <- BodyB]),
+   Lp#{Id => datalog_vm:union(A, B)};
+
+cc_horn({Id, {[HeadA | BodyA], [HeadB | BodyB], [HeadC | BodyC]}}, Source, Lp) ->
+   A = datalog_vm:horn(HeadA, [cc_sigma(Sigma, Source, Lp) || Sigma <- BodyA]),
+   B = datalog_vm:horn(HeadB, [cc_sigma(Sigma, Source, Lp) || Sigma <- BodyB]),
+   C = datalog_vm:horn(HeadC, [cc_sigma(Sigma, Source, Lp) || Sigma <- BodyC]),
+   Lp#{Id => datalog_vm:union(A, B, C)}.
 
 
 cc_sigma(#{'@' := {datalog, stream}} = Sigma, Source, _) ->

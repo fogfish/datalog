@@ -64,13 +64,15 @@ f(X1) ->
 
 f(X1, X2) ->
    fun(List) ->
-      [identity ||
+      X = [identity ||
          stream:build(List),
          nary(2, _),
          filter(1, X1, _),
          filter(2, X2, _),
          stream:map(fun erlang:tuple_to_list/1, _)
-      ]
+      ],
+      io:format("=[ list ]=> ~p ~p -> ~p~n", [X1, X2, stream:list(X)]),
+      X
    end.
 
 f(X1, X2, X3) ->
