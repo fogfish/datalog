@@ -43,7 +43,7 @@ optimise(Clause) ->
    Clause.
 
 %%
-join([#horn{id = Id} | _] = Datalog) ->
+join([#horn{id = Id, head = Head} | _] = Datalog) ->
    case 
       lists:partition(fun(#horn{id = X}) -> X =:= Id; (_) -> false end, Datalog)
    of
@@ -52,9 +52,9 @@ join([#horn{id = Id} | _] = Datalog) ->
       {Joints, Other}  ->
          case is_recc(Id, Joints) of
             false ->
-               [#join{id = Id, horn = Joints} | join(Other)];
+               [#join{id = Id, head = Head, horn = Joints} | join(Other)];
             true  ->
-               [#recc{id = Id, horn = Joints} | join(Other)]
+               [#recc{id = Id, head = Head, horn = Joints} | join(Other)]
          end
    end; 
 

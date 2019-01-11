@@ -89,129 +89,6 @@ spinoff(Cell, {Stack, XHead, [HHorn | THorn] = Horns, Head, Sbf}) ->
    ),
    {Cell, {[New | Stack], XHead, Horns, Head, Sbf}}.
 
-
-% horn_recc_1(XHead, undefined, THorn, Head) ->
-%    undefined;
-
-% horn_recc_1(XHead, Prev, THorn, Head) ->
-%    StreamP = stream:map(
-%       fun(Tuple) -> maps:from_list( lists:zip(XHead, Tuple) ) end,
-%       Prev
-%    ),
-%    Stream = join(StreamP, THorn),
-%    New = stream:map(
-%       fun(a) -> a; (X) ->
-%          [maps:get(K, X) || K <- Head]
-%       end,
-%       Stream
-%    ),
-%    io:format("=[ xxxx ]=> ~p~n", [stream:list(New)]),
-%    horn_recc_1(XHead, New, THorn, Head).
-%    % horn_recc_1(XHead, filt(New), THorn, Head).
-
-
-
-
-%%
-%%
-% union(A, B) ->
-%    fun(Env, Lp) ->
-%       HornA = A(Env, Lp),
-%       % HornB = B(Env, Lp#{a => A}),
-%       HornB = B(Env, Lp),
-%       fun(SubQ) ->
-%          HornB(SubQ, HornA(SubQ))
-%          % HornB(SubQ)
-
-%          %% vvvv -- union
-
-%          % cc(HornA(SubQ), stream:new(a, fun() -> HornB(SubQ) end))
-%          % HornA(SubQ)
-
-%          % cc(stream:new(a, fun() -> HornA(SubQ) end), stream:new(x, fun() -> HornB(SubQ) end))
-%          % cc(stream:new(a, fun() -> HornA(SubQ) end), stream:new(a, fun() -> HornB(SubQ) end))
-%          % cc(HornA(SubQ), stream:new(x, fun() -> HornB(SubQ) end))
-%       end
-%    end.
-
-% union(A, B, C) ->
-%    fun(Env, Lp) ->
-%       HornA = A(Env, Lp),
-%       HornB = B(Env, Lp),
-%       HornC = C(Env, Lp),
-%       fun(SubQ) ->
-%          cc(
-%             HornA(SubQ), 
-%             stream:new(undefined, 
-%                fun() -> 
-%                   cc(HornB(SubQ), stream:new(undefined, fun() -> HornC(SubQ) end))
-%                end
-%             )
-%          )
-%       end
-%    end.
-
-% % % uniz(Stream) ->
-% % %    % {_, MasterOfS} = stream:splitwhile(fun(X) -> X /= a end, Stream),
-% % %    % {A, B} = stream:splitwhile(fun(X) -> X /= a end, stream:tail(MasterOfS)),
-% % %    {A, B} = stream:splitwhile(fun(X) -> X /= a end, Stream),
-% % %    case filt(A) of
-% % %       undefined ->
-% % %          undefined;
-% % %          % {C, D} = stream:splitwhile(fun(X) -> X /= a end, stream:tail(B)),
-% % %          % case filt(C) of
-% % %          %    undefined ->
-% % %          %       undefined;
-% % %          %    NewC ->
-% % %          %       cc(NewC, stream:new(x, fun() -> unizz(D) end))
-% % %          % end;
-% % %       NewA ->
-% % %          cc(NewA, stream:new(x, fun() -> unizz(B) end))
-% % %    end.
-
-% % % unizz(Stream) ->
-% % %    uniz(stream:tail(Stream)).
-
-% % filt(Stream) ->
-% %    stream:filter(
-% %       fun(X) ->
-% %          case not sbf:has(X, erlang:get(sbf)) of
-% %             true ->
-% %                io:format("==> lift ~p~n", [X]),
-% %                erlang:put(sbf, sbf:add(X, erlang:get(sbf))),
-% %                true;
-% %             false ->
-% %                io:format("==> ignore ~p~n", [X]),
-% %                false
-% %          end
-% %       end,
-% %       Stream
-% %    ).
-
-% cc(?None, {stream, x, _} = StreamB) ->
-%    stream:tail(StreamB);
-
-% cc(?None, StreamB) ->
-%    StreamB;
-% cc(StreamA, ?None) ->
-%    StreamA;
-% cc(StreamA, StreamB) ->
-%    stream:new(stream:head(StreamA), fun() -> cc(stream:tail(StreamA), StreamB) end).
-
-% unique(Stream) ->
-%    stream:unfold(fun uniq/1, Stream).
-
-% uniq(?stream()) ->
-%    stream:new();  
-
-% uniq(Stream) ->
-%    Item = stream:head(Stream),
-%    Sbf1 = sbf:add(Item, erlang:get(sbf)),
-%    erlang:put(sbf, Sbf1),
-%    Tail = stream:filter(fun(X) -> not sbf:has(X, erlang:get(sbf)) end, Stream),
-%    {stream:head(Stream), Tail}.
-
-
 %%
 %%
 horn(Head, Horn) ->
@@ -221,7 +98,7 @@ horn(Head, Horn) ->
          Heap   = maps:from_list(lists:zip(Head, SubQ)),
          Stream = join(eval(Heap, HHorn), THorn),
          stream:map(
-            fun(a) -> a; (X) ->
+            fun(X) ->
                [maps:get(K, X) || K <- Head]
             end,
             Stream
@@ -229,24 +106,6 @@ horn(Head, Horn) ->
       end
    end.
 
-
-% env_call(a, Lp, Env) ->
-%    Fun = maps:get(a, Lp),
-%    fun(SubQ) ->
-%       io:format("=[ qq ]=> ~p~n", [SubQ]),
-%       % stream:new(a, fun() -> ( Fun(Env, Lp) )(SubQ) end)
-%       Stream = ( Fun(Env, Lp) )(SubQ),
-%       % % io:format("=[ data ]=> ~p~n", [stream:tail(Stream)]),
-%       Stream
-%    end;
-
-% env_call(F, Lp, Env) when is_atom(F) ->
-%    Fun = maps:get(F, Lp),
-%    fun(SubQ) ->
-%       ( Fun(Env, Lp) )(SubQ)
-%    end;
-% env_call(F, Lp, Env) ->
-%    F(Env, Lp).
 
 join(Stream, [#{'.' := pipe, '@' := Pipe} | THorn]) ->
    join(Pipe(Stream), THorn);
@@ -265,7 +124,7 @@ join(Stream, []) ->
 eval(Heap, #{'_' := Head, '@' := Fun} = Spec) ->
    SubQ = [term(T, Spec, Heap) || T <- Head],
    stream:map(
-      fun(a) -> a ; (Tuple) ->
+      fun(Tuple) ->
          %% Note: we need to give a priority to existed heap values, unless '_'
          %% maps:merge(Heap, maps:from_list( lists:zip(Head, Tuple) ))
          Prev = maps:filter(fun(_, X) -> X /= '_' end, Heap),

@@ -1,6 +1,11 @@
 %% @doc
 %%   abstract syntax tree 
 
+%%
+%% Erlang Native Format
+
+
+
 -type id()     :: atom() | {atom(), atom()} | {iri, binary(), binary()}.
 -type head()   :: [_].
 -type body()   :: [#{}].
@@ -18,11 +23,13 @@
 
 -record(join, {
    id   = undefined        :: id()
+,  head = undefined        :: head()
 ,  horn = undefined        :: [#horn{}]
 }).
 
 -record(recc, {
    id   = undefined        :: id()
+,  head = undefined        :: head()
 ,  horn = undefined        :: [#horn{}]
 }).
 
