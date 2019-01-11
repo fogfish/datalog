@@ -25,11 +25,8 @@
 -export([
    union/1,
    recursion/2,
-
-   % union/2,
-   % union/3,
    horn/2,
-   stream/1,
+   % stream/1,
    stream/2
 ]).
 
@@ -137,53 +134,57 @@ eval(Heap, #{'_' := Head, '@' := Fun} = Spec) ->
 %%
 %%
 term(T, Spec, Heap) ->
-   [undefined || term(T, Spec), term(T, Heap)].
+   case term(T, Spec) of
+      '_' -> term(T, Heap);
+      Val -> Val
+   end.
+   % [undefined || term(T, Spec), term(T, Heap)].
 
 term(T, Predicate)
  when is_atom(T) ->
    case Predicate of
       #{T := Value} -> Value;
-      _             -> undefined
+      _             -> '_' %undefined
    end;
 term(T, _) ->
    T.
 
 %%
 %% evaluate stream 
-stream(#{'.' := Keys, '>' := Spec, '@' := Gen}) ->
-   fun(Env, _Lp) ->
-      fun(SubQ) -> (Gen(Keys, SubQ, Spec))(Env) end
-   end;
+% stream(#{'.' := Keys, '>' := Spec, '@' := Gen}) ->
+%    fun(Env, _Lp) ->
+%       fun(SubQ) -> (Gen(Keys, SubQ, Spec))(Env) end
+%    end;
 
-stream(#{'.' := Keys, '@' := Gen}) ->
-   fun(Env, _Lp) ->
-      fun(SubQ) -> (Gen(Keys, SubQ))(Env) end
-   end;
+% stream(#{'.' := Keys, '@' := Gen}) ->
+%    fun(Env, _Lp) ->
+%       fun(SubQ) -> (Gen(Keys, SubQ))(Env) end
+%    end;
 
-stream(#{'_' := [_], '@' := Gen}) ->
-   fun(Env, _Lp) ->
-      fun([X1]) -> (Gen(X1))(Env) end
-   end;
+% stream(#{'_' := [_], '@' := Gen}) ->
+%    fun(Env, _Lp) ->
+%       fun([X1]) -> (Gen(X1))(Env) end
+%    end;
 
-stream(#{'_' := [_, _], '@' := Gen}) ->
-   fun(Env, _Lp) ->
-      fun([X1, X2]) -> (Gen(X1, X2))(Env) end
-   end;
+% stream(#{'_' := [_, _], '@' := Gen}) ->
+%    fun(Env, _Lp) ->
+%       fun([X1, X2]) -> (Gen(X1, X2))(Env) end
+%    end;
 
-stream(#{'_' := [_, _, _],'@' := Gen}) ->
-   fun(Env, _Lp) ->
-      fun([X1, X2, X3]) -> (Gen(X1, X2, X3))(Env) end
-   end;
+% stream(#{'_' := [_, _, _],'@' := Gen}) ->
+%    fun(Env, _Lp) ->
+%       fun([X1, X2, X3]) -> (Gen(X1, X2, X3))(Env) end
+%    end;
 
-stream(#{'_' := [_, _, _, _], '@' := Gen}) ->
-   fun(Env, _Lp) ->
-      fun([X1, X2, X3, X4]) -> (Gen(X1, X2, X3, X4))(Env) end
-   end;
+% stream(#{'_' := [_, _, _, _], '@' := Gen}) ->
+%    fun(Env, _Lp) ->
+%       fun([X1, X2, X3, X4]) -> (Gen(X1, X2, X3, X4))(Env) end
+%    end;
 
-stream(#{'_' := [_, _, _, _, _], '@' := Gen}) ->
-   fun(Env, _Lp) ->
-      fun([X1, X2, X3, X4, X5]) -> (Gen(X1, X2, X3, X4, X5))(Env) end
-   end.
+% stream(#{'_' := [_, _, _, _, _], '@' := Gen}) ->
+%    fun(Env, _Lp) ->
+%       fun([X1, X2, X3, X4, X5]) -> (Gen(X1, X2, X3, X4, X5))(Env) end
+%    end.
 
 %%
 %%
