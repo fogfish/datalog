@@ -32,18 +32,18 @@ CLAUSES -> '$empty' :
 %%
 %%
 GOAL -> '?-' symbol '(' TERMS ')' '.' :
-   {atom('$2'), '$4'}.
+   {goal, atom('$2'), '$4'}.
 
 %%
 %%
-HORN -> symbol '(' TERMS ')' ':-' BODY '.' :
-   {atom('$1'), '$3', '$6'}.
+HORN -> PREDICATE '(' TERMS ')' ':-' BODY '.' :
+   {horn, '$1', '$3', '$6'}.
 
-HORN -> symbol '(' TERMS ')' '.' :
-   {atom('$1'), '$3', []}.
+HORN -> PREDICATE '(' TERMS ')' '.' :
+   {source, '$1', '$3'}.
 
-HORN -> symbol '(' ')' '.' :
-   {atom('$1'), [], []}.
+HORN -> PREDICATE '(' ')' '.' :
+   {source, '$1', []}.
 
 %%
 %%
@@ -69,7 +69,7 @@ PREDICATE -> symbol :
    atom('$1').
 
 PREDICATE -> symbol ':' symbol :
-  erlang:list_to_atom( unwrap('$1') ++ ":" ++ unwrap('$3') ).
+  {iri, binary('$1'), binary('$3')}.
 
 PREDICATE -> symbol '.' symbol :
    {atom('$1'), atom('$3')}.

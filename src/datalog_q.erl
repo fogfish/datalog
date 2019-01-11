@@ -19,6 +19,8 @@
 %%   for evaluation. It has to be adapted to `-type datalog:q()`.
 -module(datalog_q).
 
+-include("datalog.hrl").
+
 -export([
    native/1
 ]).
@@ -27,38 +29,56 @@
 %%
 -spec native([{_, _, _}]) -> datalog:q().
 
-native(Horns) ->
-   union(
-      lists:foldr(
-         fun({Horn, Head, Body}, Datalog) ->
-            % datalog complaint body consists of predicates and infix predicates (built-in filters).
-            % predicate is converted to `-type pattern()`. The filters are interleaved 
-            % into pattern so that sigma function can construct stream of ground facts.
-            {Pattern, Filter} = lists:partition(fun(X) -> size(X) =:= 2 end, Body),
-            [{Horn, [Head | ast_to_body(Pattern, Filter)]} | Datalog];
+native(Datalog) ->
+   join(lists:map(fun optimise/1, Datalog)).
 
-         ({Horn, Head}, Datalog) ->
-            [{'?', #{'@' => Horn, '_' => Head}} | Datalog]
-         end,
-         [],
-         Horns 
-      )
-   ).
+%%
+optimise(#horn{body = Body} = Horn) ->
+   % horn clause body consists of predicates and infix predicates.
+   % infix predicates are converted to stream range filters 
+   {Pattern, Infix} = lists:partition(fun(X) -> size(X) =:= 2 end, Body),
+   Horn#horn{body = ast_to_body(Pattern, Infix)};
 
-union([{Horn, BodyA}, {Horn, BodyB} | Tail]) ->
-   [{Horn, {BodyA, BodyB}} | union(Tail)];
-union([{Horn, BodyA}, {Horn, BodyB}, {Horn, BodyC} | Tail]) ->
-   [{Horn, {BodyA, BodyB, BodyC}} | union(Tail)];
-union([Head | Tail]) ->
-   [Head | union(Tail)];
-union([]) ->
+optimise(Clause) ->
+   Clause.
+
+%%
+join([#horn{id = Id} | _] = Datalog) ->
+   case 
+      lists:partition(fun(#horn{id = X}) -> X =:= Id; (_) -> false end, Datalog)
+   of
+      {[Horn], Other} ->
+         [Horn | join(Other)];
+      {Joints, Other}  ->
+         case is_recc(Id, Joints) of
+            false ->
+               [#join{id = Id, horn = Joints} | join(Other)];
+            true  ->
+               [#recc{id = Id, horn = Joints} | join(Other)]
+         end
+   end; 
+
+join([Head | Tail]) ->
+   [Head | join(Tail)];
+
+join([]) ->
    [].
 
+%%
+is_recc(_, []) ->
+   false;
+is_recc(Horn, [#horn{body = Body} | T]) ->
+   case lists:dropwhile(fun(#{'@' := X}) -> X /= Horn end, Body) of
+      [] ->
+         is_recc(Horn, T);
+      _  ->
+         true
+   end.
 
 %%
 %%
-ast_to_body(Pattern, Filter) ->
-   [ast_to_pattern(X, Filter) || X <- Pattern].
+ast_to_body(Pattern, Infix) ->
+   [ast_to_pattern(X, Infix) || X <- Pattern].
 
 %%
 %%
@@ -94,4 +114,5 @@ ast_to_filter(Variable, Filter, Pattern) ->
                maps:put(Variable, F, Pattern)
          end
    end.
+
 

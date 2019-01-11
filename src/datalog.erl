@@ -16,6 +16,7 @@
 %% @doc
 %%   datalog evaluator
 -module(datalog).
+-include("datalog.hrl").
 
 %%
 %% datalog interface
@@ -24,7 +25,6 @@
    q/2,
    p/1,
    c/2,
-   c/3,
    schema/1,
    filter/1,
    takewhile/2
@@ -40,8 +40,8 @@
 
 %% datalog query is a set of horn clauses
 -type q()         :: #{horn() => [head() | body()]}.
--type head()      :: [atom()].
--type body()      :: [predicate()].
+% -type head()      :: [atom()].
+% -type body()      :: [predicate()].
 -type horn()      :: atom().
 
 %% pattern is unit of work to access ground facts persisted in external storage. 
@@ -137,23 +137,58 @@ p(Datalog, PreProcessor) ->
 
 %%
 %% compile native datalog to evaluator function 
-c(Source, Datalog) ->
-   c(Source, Datalog, []).
-
-c(Source, Datalog, Opts) ->
-   case lists:keyfind(return, 1, Opts) of
-      {_, maps} ->
-         c_maps(Source, Datalog);
-      _    ->
-         c_list(Source, Datalog)
+c(Source, [#goal{id = Goal, head = Head} | Datalog]) ->
+   io:format("==> ~p~n", [Datalog]),
+   Lprogram = lists:foldl(fun(Horn, Acc) -> compile(Source, Horn, Acc) end, #{}, Datalog),
+   Fun = maps:get(Goal, Lprogram),
+   fun(Env) ->
+      erlang:put(sbf, sbf:new(128, 0.0001)),
+      (Fun(Env))(Head)
    end.
 
-c_list(Source, [{'?', #{'@' := Goal, '_' := Head}} | Datalog]) ->
+compile(Source, #source{id = Id, head = Head}, Datalog) ->
+   Datalog#{Id => datalog_vm:stream(fun Source:stream/2, Head)};
+
+compile(_, #horn{id = Id} = Horn, Datalog) ->
+   Datalog#{Id => compile(Horn, Datalog)};
+
+compile(_, #join{id = Id} = Join, Datalog) ->
+   Datalog#{Id => compile(Join, Datalog)};
+
+compile(_, #recc{id = Id} = Recc, Datalog) ->
+   Datalog#{Id => compile(Recc, Datalog)}.
+
+
+compile(#{'@' := Gen} = Sigma, Datalog) ->
+   Sigma#{'@' => maps:get(Gen, Datalog, Gen)};
+
+compile(#horn{head = Head, body = Body}, Datalog) ->
+   datalog_vm:horn(Head, [compile(Sigma, Datalog) || Sigma <- Body]);
+
+compile(#join{horn = Body}, Datalog) ->
+   datalog_vm:union([compile(Sigma, Datalog) || Sigma <- Body]);
+
+compile(#recc{horn = [I, #horn{body = Body} = Horn]}, Datalog) ->
+   datalog_vm:recursion(
+      compile(I, Datalog),
+      Horn#horn{body = [compile(Sigma, Datalog) || Sigma <- Body]}
+   ).
+
+   % datalog_vm:recursion([compile(Sigma, Datalog) || Sigma <- Body]).
+
+
+   % case lists:keyfind(return, 1, Opts) of
+   %    {_, maps} ->
+   %       c_maps(Source, Datalog);
+   %    _    ->
+   %       c_list(Source, Datalog)
+   % end.
+
+c_list(Source, [#goal{id = Goal, head = Head} | Datalog]) ->
    Lprogram = lists:foldl(fun(Horn, LP) -> cc_horn(Horn, Source, LP) end, #{}, Datalog),
    Fun = maps:get(Goal, Lprogram),
    io:format("==> ~p~n", [Lprogram]),
    fun(Env) ->
-      erlang:put(sbf, sbf:new(128, 0.0001)),
       (Fun(Env, Lprogram))(Head)
    end.
 
@@ -187,6 +222,9 @@ cc_horn({Id, {[HeadA | BodyA], [HeadB | BodyB], [HeadC | BodyC]}}, Source, Lp) -
    B = datalog_vm:horn(HeadB, [cc_sigma(Sigma, Source, Lp) || Sigma <- BodyB]),
    C = datalog_vm:horn(HeadC, [cc_sigma(Sigma, Source, Lp) || Sigma <- BodyC]),
    Lp#{Id => datalog_vm:union(A, B, C)}.
+
+
+% cc_sigma(#stream{id = Id, head = Head}) ->
 
 
 cc_sigma(#{'@' := {datalog, stream}} = Sigma, Source, _) ->
