@@ -79,7 +79,7 @@ spinoff(Cell, {Stack, XHead, [HHorn | THorn] = Horns, Head, Sbf}) ->
    Heap   = maps:from_list(lists:zip(XHead, Cell)),
    Stream = join(eval(Heap, HHorn), THorn),
    New = stream:map(
-      fun(a) -> a; (X) ->
+      fun(X) ->
          [maps:get(K, X) || K <- Head]
       end,
       Stream
@@ -138,10 +138,14 @@ term(T, Spec, Heap) ->
       '_' -> term(T, Heap);
       Val -> Val
    end.
-   % [undefined || term(T, Spec), term(T, Heap)].
 
 term(T, Predicate)
  when is_atom(T) ->
+   case Predicate of
+      #{T := Value} -> Value;
+      _             -> '_' %undefined
+   end;
+term({iri, _, _} = T, Predicate) ->
    case Predicate of
       #{T := Value} -> Value;
       _             -> '_' %undefined

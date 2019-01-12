@@ -31,8 +31,8 @@ CLAUSES -> '$empty' :
 
 %%
 %%
-GOAL -> '?-' symbol '(' TERMS ')' '.' :
-   {goal, atom('$2'), '$4'}.
+GOAL -> '?-' PREDICATE '(' TERMS ')' '.' :
+   {goal, '$2', '$4'}.
 
 %%
 %%

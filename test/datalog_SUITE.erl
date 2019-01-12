@@ -24,6 +24,7 @@
 ,  recursion_1/1
 ,  recursion_2/1
 ,  recursion_3/1
+,  semantic_web/1
 ]).
 
 all() ->
@@ -191,4 +192,16 @@ recursion_3(_) ->
       [{1,2}, {2,3}, {2,5}, {3,4}, {4,2}, {5,4}],
       [{1,2}, {2,3}, {1,3}, {4,3}, {3,3}, {5,3}, {2,5}, {1,5}, {4,5}, {3,5}, {5,5}, {3,4}, {2,4}, {1,4}, {4,4}, {5,4}, {4,2}, {3,2}, {2,2}, {5,2}]
    ).
+
+%%
+%%
+semantic_web(_) ->
+   datalog(
+      "?- schema:person(_, _). foaf:person(rdf:id, foaf:name). schema:person(rdf:id, foaf:name) :- foaf:person(rdf:id, foaf:name).",
+      [{1,2}, {2,3}, {3,4}],
+      [{1,2}, {2,3}, {3,4}]
+   ).
+
+
+
 
