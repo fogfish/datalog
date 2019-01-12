@@ -44,7 +44,22 @@
    bif_datalog/1, 
    bif_external/1,
    semantic_web/1,
-   jsonld/1
+   jsonld/1,
+   constant_xsd_absolute_uri/1,
+   constant_xsd_compact_uri/1,
+   constant_xsd_string/1,
+   constant_xsd_lang_string/1,
+   constant_xsd_integer/1,
+   constant_xsd_decimal/1,
+   constant_xsd_boolean/1,
+   constant_xsd_datetime/1,
+   constant_xsd_date/1,
+   constant_xsd_yearmonth/1,
+   constant_xsd_monthdate/1,
+   constant_xsd_time/1,
+   constant_xsd_seq/1,
+   constant_xsd_map/1,
+   constant_xsd_list/1
 ]).
 
 %%%----------------------------------------------------------------------------   
@@ -278,4 +293,112 @@ jsonld(_Config) ->
          #{'@' := b, '_' := ['@type', z]}
       ]}
    ] = datalog:p("h(@id,z) :- a(@id, @type), b(@type, z).").
+
+%%
+%%
+constant_xsd_absolute_uri(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := {iri, <<"http://example.com/a">>}}
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = <http://example.com/a>.").
+
+constant_xsd_compact_uri(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := {iri, <<"example">>, <<"a">>}}
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = example:a.").
+
+constant_xsd_string(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := <<"example">>}
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = \"example\".").
+
+constant_xsd_lang_string(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := <<"example">>}
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = \"example\"@en.").
+
+constant_xsd_integer(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := 123}
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = 123.").
+
+constant_xsd_decimal(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := 12.3}
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = 12.3.").
+
+constant_xsd_boolean(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x, y], x := true, y := false}
+      ]}
+   ] = datalog:p("h(x) :- a(x, y), x = true, y = false.").
+
+constant_xsd_datetime(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := {1175,783410,0}}
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = 2007-04-05T14:30:10Z.").
+
+constant_xsd_date(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := {{2007,4,5},{0,0,0}}}
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = 2007-04-05.").
+
+constant_xsd_yearmonth(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := {{2007,4,0},{0,0,0}}}
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = 2007-04.").
+
+constant_xsd_monthdate(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := {{0,4,5},{0,0,0}}}
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = --04-05.").
+
+constant_xsd_time(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := {{0,0,0},{14,30,10}}}
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = 14:30:10Z.").
+
+constant_xsd_seq(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := {154, 7623, 23} }
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = (154, 7623, 23).").
+
+constant_xsd_map(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := #{<<"type">> := <<"Point">>, <<"coordinates">> := [21.3, 60.2]} }
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = {type:\"Point\", coordinates:[21.3, 60.2]}.").
+
+constant_xsd_list(_) ->
+   [
+      {horn, h, [x], [
+         #{'@' := a, '_' := [x], x := [1, <<"a">>, 3.2] }
+      ]}
+   ] = datalog:p("h(x) :- a(x), x = [1, \"a\", 3.2].").
+
 

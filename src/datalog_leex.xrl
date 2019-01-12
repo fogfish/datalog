@@ -66,7 +66,7 @@ Rules.
 \:\- :
    {token,{list_to_atom(TokenChars),TokenLine}}.
 
-[()\[\]{}_<=>!.,^\-\:] :
+[()\[\]{}_<=>!.,^\-\:@] :
    {token,{list_to_atom(TokenChars),TokenLine}}.
 
 {WS}+  : skip_token.

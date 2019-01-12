@@ -193,6 +193,9 @@ compile(_, #recc{id = Id} = Recc, Datalog) ->
    Datalog#{Id => compile(Recc, Datalog)}.
 
 
+compile(#{'@' := {datalog, Fun}} = Sigma, _Datalog) ->
+   Sigma#{'@' => datalog_lang:Fun(Sigma), '.' => pipe};
+
 compile(#{'@' := Gen} = Sigma, Datalog) ->
    Sigma#{'@' => maps:get(Gen, Datalog, Gen)};
 

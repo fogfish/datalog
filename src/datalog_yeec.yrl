@@ -17,7 +17,7 @@
 %%   datalog
 
 Nonterminals   CLAUSES GOAL HORN BODY ITEM PREDICATE TERMS TERM PAIRS LIT INFIX.
-Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' '_' '^' '-' ':' '[' ']' '{' '}' symbol iri binary integer decimal.
+Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' '-' ':' '[' ']' '{' '}' symbol iri binary integer decimal.
 Rootsymbol     CLAUSES.
 
 %%
@@ -121,6 +121,9 @@ LIT -> symbol ':' symbol :
 %%
 %% xsd:string
 LIT -> binary :
+   binary('$1').
+
+LIT -> binary symbol :
    binary('$1').
 
 %%

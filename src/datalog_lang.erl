@@ -72,7 +72,7 @@ filter_check(B, {'=/=', A}) -> B =/= A.
 -spec unique(datalog:predicate()) -> _.
 
 unique(#{'_' := Head}) ->   
-   fun(_, _) ->
+   fun(_) ->
       fun(Stream) ->
          stream:unfold(fun uniq/1, {?SBF, Head, Stream})
       end
@@ -128,7 +128,7 @@ flatten({[H|T], Term, Stream}) ->
 -spec eq(datalog:predicate()) -> _.
 
 eq(#{'_' := [A, B]}) ->
-   fun(_, _) ->
+   fun(_) ->
       fun(Stream) ->
          stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =:= Bx end, Stream)
       end
@@ -137,7 +137,7 @@ eq(#{'_' := [A, B]}) ->
 -spec ne(datalog:predicate()) -> _.
 
 ne(#{'_' := [A, B]}) ->
-   fun(_, _) ->
+   fun(_) ->
       fun(Stream) ->
          stream:filter(fun(#{A := Ax, B := Bx}) -> Ax =/= Bx end, Stream)
       end
