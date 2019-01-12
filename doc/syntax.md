@@ -144,3 +144,44 @@ x != 10
 x in (10, 20, 30)
 ``` 
 
+## Union
+
+datalog supports union `a(X,Y) ⋁ b(X,Y)` by
+
+```
+h(X,Y) :- a(X,Y)
+h(X,Y) :- b(X,Y)
+```
+
+## Recursion
+
+The following example computes the transitive closure of a graph.
+
+```
+t(x,y) :- g(x,y) 
+t(x,y) :- g(x,z), t(z,y).
+```
+
+Consider the graph
+
+```
+g : (1, 2), (2, 3), (3, 4), (4, 5). 
+```
+
+Then we have
+
+```
+0 -> t : (1, 2), (2, 3), (3, 4), (4, 5)
+1 -> t : (1, 3), (2, 4), (3, 5)
+2 -> t : (1, 4), (2, 5)
+3 -> t : (1, 5)
+```
+
+An other example
+
+```
+g : (1, 2), (2, 3), (3, 2).
+
+0 -> t : (1, 2), (2, 3), (3, 2)
+1 -> t : (1, 3), (2, 2), (3, 3)
+```

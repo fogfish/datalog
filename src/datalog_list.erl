@@ -23,7 +23,7 @@
 %%
 %% example of ground facts generator, it produces a stream of tuple from input list
 %%
-%% a(x,y) :- .stream(...)
+%% a(x,y).
 stream(_, _, [X1]) ->
    fun(List) ->
       [identity ||
@@ -55,6 +55,21 @@ stream(_, _, [X1, X2, X3]) ->
          filter(3, X3, _),
          stream:map(fun erlang:tuple_to_list/1, _)
       ]
+   end;
+
+stream(_, _, [X1, X2, X3, X4]) ->
+   fun(List) ->
+      X = [identity ||
+         stream:build(List),
+         nary(4, _),
+         filter(1, X1, _),
+         filter(2, X2, _),
+         filter(3, X3, _),
+         filter(4, X4, _),
+         stream:map(fun erlang:tuple_to_list/1, _)
+      ],
+      io:format("==> ~p ~p ~p~n", [X1, X2, stream:list(X)]),
+      X
    end.
 
 %%

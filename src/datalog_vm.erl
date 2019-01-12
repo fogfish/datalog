@@ -52,7 +52,7 @@ funion({Stream, SubQ, HHorns}) ->
 recursion(I, #horn{head = Head, body = Body}) ->
    fun(Env) ->
       IEnv  = I(Env),
-      {Horns, [#{'_' := XHead}]} = lists:splitwith(fun(#{'@' := F}) -> is_function(F) end, Body),
+      {Horns, [#{'_' := XHead}]} = lists:partition(fun(#{'@' := F}) -> is_function(F) end, Body),
       THorns =  [Spec#{'@' => F(Env)} || #{'@' := F} = Spec <- Horns],
       fun(SubQ) ->
          stream:unfold(fun frecc/1, {[IEnv(SubQ)], XHead, THorns, Head, sbf:new(128, 0.0001)})
