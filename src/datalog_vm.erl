@@ -26,8 +26,7 @@
    union/1,
    recursion/2,
    horn/2,
-   % stream/1,
-   stream/2
+   stream/3
 ]).
 
 %%
@@ -192,8 +191,8 @@ term(T, _) ->
 
 %%
 %%
-stream(Gen, Head) ->
+stream(Gen, Id, Head) ->
    fun(Env) ->
-      fun(SubQ) -> (Gen(Head, SubQ))(Env) end
+      fun(SubQ) -> (Gen(Id, Head, SubQ))(Env) end
    end.
 

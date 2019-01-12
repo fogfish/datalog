@@ -24,7 +24,8 @@
 ,  recursion_1/1
 ,  recursion_2/1
 ,  recursion_3/1
-,  semantic_web/1
+,  source_semantic_web/1
+,  source_native/1
 ]).
 
 all() ->
@@ -36,7 +37,7 @@ all() ->
 datalog(Datalog, Input, Expect) ->
    Expect = [identity ||
       datalog:p(Datalog),
-      datalog:c(datalog_list, _, [{return, tuple}]),
+      datalog:c(datalog_list, _, [{return, tuples}]),
       datalog:q(_, Input),
       stream:list(_)
    ].
@@ -195,11 +196,18 @@ recursion_3(_) ->
 
 %%
 %%
-semantic_web(_) ->
+source_semantic_web(_) ->
    datalog(
       "?- schema:person(_, _). foaf:person(rdf:id, foaf:name). schema:person(rdf:id, foaf:name) :- foaf:person(rdf:id, foaf:name).",
       [{1,2}, {2,3}, {3,4}],
       [{1,2}, {2,3}, {3,4}]
+   ).
+
+source_native(_) ->
+   datalog(
+      "?- a(_, _). foo.p(x, y). bar.p(x, y). a(x, y) :- foo.p(x, z), bar.p(z, y).",
+      [{1,2}, {2,3}, {3,4}, {4,5}],
+      [{1,3}, {2,4}, {3,5}]
    ).
 
 

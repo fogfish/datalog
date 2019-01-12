@@ -143,9 +143,9 @@ c(Source, Datalog) ->
 
 c(Source, Datalog, Opts) ->
    case lists:keyfind(return, 1, Opts) of
-      {_, map} ->
+      {_, maps} ->
          c_map(Source, Datalog);
-      {_, tuple} ->
+      {_, tuples} ->
          c_tuple(Source, Datalog);
       _    ->
          c_list(Source, Datalog)
@@ -181,7 +181,7 @@ c_map(Source, [#goal{id = Goal, head = Head} | Datalog]) ->
 
 
 compile(Source, #source{id = Id, head = Head}, Datalog) ->
-   Datalog#{Id => datalog_vm:stream(fun Source:stream/2, Head)};
+   Datalog#{Id => datalog_vm:stream(fun Source:stream/3, Id, Head)};
 
 compile(_, #horn{id = Id} = Horn, Datalog) ->
    Datalog#{Id => compile(Horn, Datalog)};

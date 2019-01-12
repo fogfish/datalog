@@ -18,13 +18,13 @@
 -module(datalog_list).
 -compile({parse_transform, category}).
 
--export([stream/2]).
+-export([stream/3]).
 
 %%
 %% example of ground facts generator, it produces a stream of tuple from input list
 %%
 %% a(x,y) :- .stream(...)
-stream(_, [X1]) ->
+stream(_, _, [X1]) ->
    fun(List) ->
       [identity ||
          stream:build(List),
@@ -34,7 +34,7 @@ stream(_, [X1]) ->
       ]
    end;
 
-stream(_, [X1, X2]) ->
+stream(_, _, [X1, X2]) ->
    fun(List) ->
       [identity ||
          stream:build(List),
@@ -45,7 +45,7 @@ stream(_, [X1, X2]) ->
       ]
    end;
 
-stream(_, [X1, X2, X3]) ->
+stream(_, _, [X1, X2, X3]) ->
    fun(List) ->
       [identity ||
          stream:build(List),
