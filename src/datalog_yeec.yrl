@@ -16,7 +16,7 @@
 %% @doc
 %%   datalog
 
-Nonterminals   CLAUSES GOAL HORN BODY ITEM PREDICATE TERMS TERM PAIRS LIT GUARD.
+Nonterminals   CLAUSES GOAL HORN BODY ITEM PREDICATE TERMS TERM PAIRS LIT INFIX.
 Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' '_' '^' '-' ':' '[' ']' '{' '}' symbol iri binary integer decimal.
 Rootsymbol     CLAUSES.
 
@@ -60,8 +60,12 @@ ITEM -> PREDICATE '(' ')' :
 ITEM -> PREDICATE '(' TERMS ')' :
    {'$1', '$3'}.
 
-ITEM -> symbol GUARD TERM :
+ITEM -> symbol INFIX TERM :
    {'$2', atom('$1'), '$3'}.
+
+ITEM -> symbol ':' symbol INFIX TERM :
+   {'$4', {iri, binary('$1'), binary('$3')}, '$5'}.
+
 
 %%
 %%
@@ -158,23 +162,23 @@ LIT -> symbol :
 
 %%
 %%
-GUARD    -> '=' :
+INFIX    -> '=' :
    '=:='.
-GUARD    -> '>' :
+INFIX    -> '>' :
    '>'.
-GUARD    -> '<' :
+INFIX    -> '<' :
    '<'.
-GUARD    -> '>' '=' :
+INFIX    -> '>' '=' :
    '>='.
-GUARD    -> '=' '>' :
+INFIX    -> '=' '>' :
    '>='.
-GUARD    -> '=' '<' :
+INFIX    -> '=' '<' :
    '=<'.
-GUARD    -> '<' '=' :
+INFIX    -> '<' '=' :
    '=<'.
-GUARD    -> '!' '=' :
+INFIX    -> '!' '=' :
    '=/='.
-GUARD    -> symbol  :
+INFIX    -> symbol  :
    atom('$1').
 
 %%

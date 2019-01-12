@@ -21,6 +21,10 @@
 %% common test
 -export([all/0]).
 -export([
+   goal/1,
+   stream/1,
+   stream_native/1,
+   stream_semantic/1,
    horn_1/1, 
    horn_n/1,
    horn_0/1,
@@ -29,7 +33,7 @@
    inline_float/1,
    anything/1,
    guard_eq_string/1, 
-   guard_eq_set_of_string/1, 
+   guard_eq_tuple_of_string/1,
    guard_eq_int/1, 
    guard_eq_float/1,
    guard_gt_string/1, 
@@ -63,16 +67,42 @@ all() ->
 
 %%
 %%
+goal(_) ->
+   [
+      {goal, h, [x,y]}
+   ] = datalog:p("?- h(x, y).").
+
+%%
+%%
+stream(_) ->
+   [
+      {source, p, [x, y]},
+      {source, p, []}
+   ] = datalog:p("p(x, y). p().").
+
+stream_native(_) ->
+   [
+      {source, {datalog, a}, []},
+      {source, {mod, a}, [<<"x">>, <<"y">>]}
+   ] = datalog:p(".a(). mod.a(\"x\", \"y\").").
+
+stream_semantic(_) ->
+   [
+      {source, {iri, <<"foaf">>, <<"person">>}, [x, y]}
+   ] = datalog:p("foaf:person(x, y).").
+
+%%
+%%
 horn_1(_Config) ->
    [
-      {h, [[x,y], 
+      {horn, h, [x,y], [ 
          #{'@' := a, '_' := [x,y]}
       ]}
    ] = datalog:p("h(x,y) :- a(x, y).").
 
 horn_n(_Config) ->
    [
-      {h, [[x,z], 
+      {horn, h, [x,z], [ 
          #{'@' := a, '_' := [x,y]},
          #{'@' := b, '_' := [y,z]}
       ]}
@@ -81,7 +111,7 @@ horn_n(_Config) ->
 
 horn_0(_Config) ->
    [
-      {h, [[x,z], 
+      {horn, h, [x,z], [ 
          #{'@' := a, '_' := [x,y]},
          #{'@' := b, '_' := []}
       ]}
@@ -91,7 +121,7 @@ horn_0(_Config) ->
 %%
 inline_string(_Config) ->
    [
-      {h, [[z], 
+      {horn, h, [z], [ 
          #{'@' := a, '_' := [<<"x">>,y]},
          #{'@' := b, '_' := [y,z]}
       ]}
@@ -99,7 +129,7 @@ inline_string(_Config) ->
 
 inline_int(_Config) ->
    [
-      {h, [[z], 
+      {horn, h, [z], [ 
          #{'@' := a, '_' := [100,y]},
          #{'@' := b, '_' := [y,z]}
       ]}
@@ -107,7 +137,7 @@ inline_int(_Config) ->
 
 inline_float(_Config) ->
    [
-      {h, [[z], 
+      {horn, h, [z], [ 
          #{'@' := a, '_' := [1.0,y]},
          #{'@' := b, '_' := [y,z]}
       ]}
@@ -117,7 +147,7 @@ inline_float(_Config) ->
 %%
 anything(_Config) ->
    [
-      {h, [[z], 
+      {horn, h, [z], [ 
          #{'@' := a, '_' := ['_',y]},
          #{'@' := b, '_' := [y,z]}
       ]}
@@ -127,16 +157,16 @@ anything(_Config) ->
 %%
 guard_eq_string(_Config) ->
    [
-      {h, [[x,z], 
+      {horn, h, [x,z], [ 
          #{'@' := a, '_' := [x,y], x := <<"x">>},
          #{'@' := b, '_' := [y,z]}
       ]}
    ] = datalog:p("h(x,z) :- a(x, y), b(y, z), x = \"x\".").
 
-guard_eq_set_of_string(_Config) ->
+guard_eq_tuple_of_string(_Config) ->
    [
-      {h, [[x,z], 
-         #{'@' := a, '_' := [x,y], x := [<<"x">>, <<"y">>, <<"z">>]},
+      {horn, h, [x,z], [ 
+         #{'@' := a, '_' := [x,y], x := {<<"x">>, <<"y">>, <<"z">>}},
          #{'@' := b, '_' := [y,z]}
       ]}
    ] = datalog:p("h(x,z) :- a(x, y), b(y, z), x = (\"x\", \"y\", \"z\").").
@@ -144,7 +174,7 @@ guard_eq_set_of_string(_Config) ->
 
 guard_eq_int(_Config) ->
    [
-      {h, [[x,z], 
+      {horn, h, [x,z], [ 
          #{'@' := a, '_' := [x,y], x := 100},
          #{'@' := b, '_' := [y,z]}
       ]}
@@ -152,7 +182,7 @@ guard_eq_int(_Config) ->
 
 guard_eq_float(_Config) ->
    [
-      {h, [[x,z], 
+      {horn, h, [x,z], [ 
          #{'@' := a, '_' := [x,y], x := 1.0},
          #{'@' := b, '_' := [y,z]}
       ]}
@@ -162,7 +192,7 @@ guard_eq_float(_Config) ->
 %%
 guard_gt_string(_Config) ->
    [
-      {h, [[x,z], 
+      {horn, h, [x,z], [ 
          #{'@' := a, '_' := [x,y], x := [{'>', <<"x">>}]},
          #{'@' := b, '_' := [y,z]}
       ]}
@@ -170,7 +200,7 @@ guard_gt_string(_Config) ->
 
 guard_gt_int(_Config) ->
    [
-      {h, [[x,z], 
+      {horn, h, [x,z], [ 
          #{'@' := a, '_' := [x,y], x := [{'>', 100}]},
          #{'@' := b, '_' := [y,z]}
       ]}
@@ -178,7 +208,7 @@ guard_gt_int(_Config) ->
 
 guard_gt_float(_Config) ->
    [
-      {h, [[x,z], 
+      {horn, h, [x,z], [ 
          #{'@' := a, '_' := [x,y], x := [{'>', 1.0}]},
          #{'@' := b, '_' := [y,z]}
       ]}
@@ -189,7 +219,7 @@ guard_gt_float(_Config) ->
 %%
 guard_string(_Config) ->
    [
-      {h, [[x,z], 
+      {horn, h, [x,z], [ 
          #{'@' := a, '_' := [x,y], x := [{'>=', <<"x">>}, {'=<', <<"z">>}]},
          #{'@' := b, '_' := [y,z]}
       ]}
@@ -197,7 +227,7 @@ guard_string(_Config) ->
 
 guard_number(_Config) ->
    [
-      {h, [[x,z], 
+      {horn, h, [x,z], [ 
          #{'@' := a, '_' := [x,y], x := [{'>=', 1.0}, {'=<', 100}]},
          #{'@' := b, '_' := [y,z]}
       ]}
@@ -208,7 +238,7 @@ guard_number(_Config) ->
 %%
 bif_datalog(_Config) ->
    [
-      {h, [[x,z], 
+      {horn, h, [x,z], [ 
          #{'@' := {datalog, a}, '_' := [x,y]},
          #{'@' := {datalog, b}, '_' := [y,z]}
       ]}
@@ -216,7 +246,7 @@ bif_datalog(_Config) ->
 
 bif_external(_Config) ->
    [
-      {h, [[x,z], 
+      {horn, h, [x,z], [ 
          #{'@' := {mod, a}, '_' := [x,y]},
          #{'@' := {mod, b}, '_' := [y,z]}
       ]}
@@ -226,16 +256,24 @@ bif_external(_Config) ->
 %%
 semantic_web(_Config) ->
    [
-      {'foaf:person', [['rdf:id', 'foaf:name'], 
-         #{'@' := 'foaf:person', '_' := ['rdf:id', 'foaf:name'], 'foaf:name' := [{'>', <<"A">>}, {'<', <<"B">>}]}
-      ]}
+      {horn, 
+         {iri, <<"foaf">>, <<"person">>}, 
+         [{iri, <<"rdf">>, <<"id">>}, {iri, <<"foaf">>, <<"name">>}],
+         [
+            #{
+               '@' := {iri, <<"foaf">>, <<"person">>},
+               '_' := [{iri, <<"rdf">>, <<"id">>}, {iri, <<"foaf">>, <<"name">>}], 
+               {iri, <<"foaf">>, <<"name">>} := [{'>', <<"A">>}, {'<', <<"B">>}]
+            }
+         ]
+      }
    ] = datalog:p("foaf:person(rdf:id, foaf:name) :- foaf:person(rdf:id, foaf:name), foaf:name > \"A\", foaf:name < \"B\".").
 
 %%
 %%
 jsonld(_Config) ->
    [
-      {h, [['@id',z], 
+      {horn, h, ['@id',z], [ 
          #{'@' := a, '_' := ['@id', '@type']},
          #{'@' := b, '_' := ['@type', z]}
       ]}
