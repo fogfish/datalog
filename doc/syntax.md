@@ -185,3 +185,14 @@ g : (1, 2), (2, 3), (3, 2).
 0 -> t : (1, 2), (2, 3), (3, 2)
 1 -> t : (1, 3), (2, 2), (3, 3)
 ```
+
+## Aggregations
+
+Many applications require the computation of various kinds of summary information over the data. Formally, an aggregate function is a mapping `ƒ` from bags (multi-sets) of domain values to domain values. The library offloads implementation of aggregations to sigma functions (external storage) but it provides a syntax to declare aggregation intent at ground truth predicates:
+
+```
+p(id, count "links", category 10 "subject").
+```
+
+
+

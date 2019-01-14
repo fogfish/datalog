@@ -59,7 +59,7 @@ stream(_, _, [X1, X2, X3]) ->
 
 stream(_, _, [X1, X2, X3, X4]) ->
    fun(List) ->
-      X = [identity ||
+      [identity ||
          stream:build(List),
          nary(4, _),
          filter(1, X1, _),
@@ -67,9 +67,7 @@ stream(_, _, [X1, X2, X3, X4]) ->
          filter(3, X3, _),
          filter(4, X4, _),
          stream:map(fun erlang:tuple_to_list/1, _)
-      ],
-      io:format("==> ~p ~p ~p~n", [X1, X2, stream:list(X)]),
-      X
+      ]
    end.
 
 %%

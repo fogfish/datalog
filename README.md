@@ -239,6 +239,7 @@ position will be bound to corresponding variable at datalog expression.
 1. [Theory of Relational Databases](http://www.cs.nott.ac.uk/~psznza/G53RDB07/rdb14.pdf)
 1. [Foundation of Database](https://wiki.epfl.ch/provenance2011/documents/foundations%20of%20databases-abiteboul-1995.pdf)
 1. [Recursive Programming in Datalog](http://infolab.stanford.edu/~ullman/dscb/dl-old.pdf)
+1. [Datalog and Recursive Query Processing](http://blogs.evergreen.edu/sosw/files/2014/04/Green-Vol5-DBS-017.pdf)
 1. http://ion.uwinnipeg.ca/~ychen2/journalpapers/StratifiedDB.pdf
 1. http://www.cs.toronto.edu/~drosu/csc343-l7-handout6.pdf
 

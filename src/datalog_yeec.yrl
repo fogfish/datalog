@@ -99,6 +99,12 @@ TERM -> '(' TERMS ')' :
 TERM -> '[' TERMS ']' :
    '$2'.
 
+TERM -> symbol LIT :
+   {atom('$1'), '$2'}.
+
+TERM -> symbol LIT LIT :
+   {atom('$1'), '$2', '$3'}.
+
 TERM -> LIT :
    '$1'.
 

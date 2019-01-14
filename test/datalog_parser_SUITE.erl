@@ -59,7 +59,8 @@
    constant_xsd_time/1,
    constant_xsd_seq/1,
    constant_xsd_map/1,
-   constant_xsd_list/1
+   constant_xsd_list/1,
+   aggregation/1
 ]).
 
 %%%----------------------------------------------------------------------------   
@@ -401,4 +402,15 @@ constant_xsd_list(_) ->
       ]}
    ] = datalog:p("h(x) :- a(x), x = [1, \"a\", 3.2].").
 
+%%
+%%
+aggregation(_) ->
+   [
+      {source, p, [
+         id,
+         {count, <<"x">>},
+         {stats, <<"y">>},
+         {category, 10, <<"z">>}
+      ]}
+   ] = datalog:p("p(id, count \"x\", stats \"y\", category 10 \"z\").").
 
