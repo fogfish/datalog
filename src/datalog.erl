@@ -170,7 +170,12 @@ c_tuple(Source, [#goal{id = Goal, head = Head} | Datalog]) ->
 
 c_map(Source, [#goal{id = Goal, head = Head} | Datalog]) ->
    Lprogram = lists:foldl(fun(Horn, Acc) -> compile(Source, Horn, Acc) end, #{}, Datalog),
-   {_, _, Vars, _} = lists:keyfind(Goal, 2, Datalog),
+   Vars = case lists:keyfind(Goal, 2, Datalog) of
+      {_, _, X, _} -> 
+         X;
+      #source{} -> 
+         [<<$_, (typecast:s(X))/binary>> || X <- lists:seq(1, length(Head))]
+   end,
    Fun = maps:get(Goal, Lprogram),
    fun(Env) ->
       stream:map(
@@ -178,7 +183,6 @@ c_map(Source, [#goal{id = Goal, head = Head} | Datalog]) ->
          (Fun(Env))(Head)
       )
    end.
-
 
 compile(Source, #source{id = Id, head = Head}, Datalog) ->
    Datalog#{Id => datalog_vm:stream(fun Source:stream/3, Id, Head)};
