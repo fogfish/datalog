@@ -18,37 +18,13 @@
 -module(datalog_list).
 -compile({parse_transform, category}).
 
--export([
-   stream/2,
-   f/1,
-   f/2,
-   f/3
-]).
+-export([stream/3]).
 
 %%
-%% example of stream generator, it produces a stream of tuple of integers
+%% example of ground facts generator, it produces a stream of tuple from input list
 %%
-%% a(x,y) :- .stream(...)
-stream([Len|Gen], SubQ) ->
-   fun(List) ->
-      stream:zip([gen(Len, N, Filter) || {N, Filter} <- lists:zip(Gen, SubQ)])
-   end.
-
-gen(Len, N, Filter) ->
-   [identity ||
-      stream:build(N),
-      stream:take(Len, _),
-      filter(Filter, _)
-   ].
-
-filter(Filter, Stream) ->
-   Fun  = datalog:filter(Filter),
-   Fun(fun(X) -> X end, Stream).
-
-%%
-%% example stream processors, it produces a stream of tuples from list
-%%
-f(X1) ->
+%% a(x,y).
+stream(_, _, [X1]) ->
    fun(List) ->
       [identity ||
          stream:build(List),
@@ -56,9 +32,9 @@ f(X1) ->
          filter(1, X1, _),
          stream:map(fun erlang:tuple_to_list/1, _)
       ]
-   end.
+   end;
 
-f(X1, X2) ->
+stream(_, _, [X1, X2]) ->
    fun(List) ->
       [identity ||
          stream:build(List),
@@ -67,9 +43,10 @@ f(X1, X2) ->
          filter(2, X2, _),
          stream:map(fun erlang:tuple_to_list/1, _)
       ]
-   end.
+   end;
 
-f(X1, X2, X3) ->
+stream(_, H, [X1, X2, X3] = K) ->
+   io:format("==< ~p ~p~n", [H, K]),
    fun(List) ->
       [identity ||
          stream:build(List),
@@ -77,6 +54,19 @@ f(X1, X2, X3) ->
          filter(1, X1, _),
          filter(2, X2, _),
          filter(3, X3, _),
+         stream:map(fun erlang:tuple_to_list/1, _)
+      ]
+   end;
+
+stream(_, _, [X1, X2, X3, X4]) ->
+   fun(List) ->
+      [identity ||
+         stream:build(List),
+         nary(4, _),
+         filter(1, X1, _),
+         filter(2, X2, _),
+         filter(3, X3, _),
+         filter(4, X4, _),
          stream:map(fun erlang:tuple_to_list/1, _)
       ]
    end.

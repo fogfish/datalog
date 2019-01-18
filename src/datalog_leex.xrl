@@ -17,7 +17,7 @@
 %%   datalog
 Definitions.
 
-CHAR  = [a-zA-Z_@:]
+CHAR  = [a-zA-Z_@]
 DIGIT = [0-9]
 WS    = ([\000-\s]|%.*)
 
@@ -25,27 +25,48 @@ WS    = ([\000-\s]|%.*)
 %%
 Rules.
 
+%%
+%% symbol
+%%
 {CHAR}+  :
-   {token, {symbol, TokenLine, list_to_atom(TokenChars)}}.
+   {token, {symbol, TokenLine, TokenChars}}.
 
 %%
-%% literals
+%% xsd:anyURI
+%%   <http://a/b> - absolute IRI
+%%   a:b - compact IRI
+%%
+<[^>]*> :
+   {token, {iri, TokenLine, strip(TokenChars,TokenLen)}}.
+
+%%
+%% xsd:string
+%%
 \"[^\"]*\" :
-   {token, {lit, TokenLine, erlang:list_to_binary(strip(TokenChars,TokenLen))}}.
+   {token, {binary, TokenLine, strip(TokenChars,TokenLen)}}.
 
+%%
+%% xsd:integer
+%%
 {DIGIT}+ :
-   {token, {lit, TokenLine, erlang:list_to_integer(TokenChars)}}.
+   {token, {integer, TokenLine, TokenChars}}.
 
-(-|\+)?{DIGIT}+\.{DIGIT}+ :
-   {token, {lit, TokenLine, erlang:list_to_float(TokenChars)}}.
+%%
+%% xsd:decimal
+%%
+{DIGIT}+\.{DIGIT}+ :
+   {token, {decimal, TokenLine, TokenChars}}.
 
+%%
+%% syntax
+%%
 \?\- :
    {token,{list_to_atom(TokenChars),TokenLine}}.
 
 \:\- :
    {token,{list_to_atom(TokenChars),TokenLine}}.
 
-[()\[\]_<=>!.,] :
+[()\[\]{}_<=>!.,^\-\:@] :
    {token,{list_to_atom(TokenChars),TokenLine}}.
 
 {WS}+  : skip_token.

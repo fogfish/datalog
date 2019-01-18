@@ -51,7 +51,8 @@ filter(With, Pattern)
 filter(With, Pattern) ->
    filter(With, [{'=:=', Pattern}]).
 
-
+filter(With, Lens, '_', Stream) ->
+   Stream;
 filter(With, Lens, Filter, Stream) ->
    With(fun(X) -> filter_check(Lens(X), Filter) end, Stream).
 
