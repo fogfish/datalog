@@ -45,7 +45,8 @@ stream(_, _, [X1, X2]) ->
       ]
    end;
 
-stream(_, _, [X1, X2, X3]) ->
+stream(_, H, [X1, X2, X3] = K) ->
+   io:format("==< ~p ~p~n", [H, K]),
    fun(List) ->
       [identity ||
          stream:build(List),
