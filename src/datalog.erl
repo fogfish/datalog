@@ -155,7 +155,7 @@ c_list(Source, [#goal{id = Goal, head = Head} | Datalog]) ->
    Lprogram = lists:foldl(fun(Horn, Acc) -> compile(Source, Horn, Acc) end, #{}, Datalog),
    Fun = maps:get(Goal, Lprogram),
    fun(Env) ->
-      (Fun(Env))(Head)
+      (Fun(Env))( head_lits(Head) )
    end.
 
 c_tuple(Source, [#goal{id = Goal, head = Head} | Datalog]) ->
@@ -164,7 +164,7 @@ c_tuple(Source, [#goal{id = Goal, head = Head} | Datalog]) ->
    fun(Env) ->
       stream:map(
          fun(Tuple) -> erlang:list_to_tuple(Tuple) end,
-         (Fun(Env))(Head)
+         (Fun(Env))( head_lits(Head) )
       )
    end.
 
@@ -180,7 +180,7 @@ c_map(Source, [#goal{id = Goal, head = Head} | Datalog]) ->
    fun(Env) ->
       stream:map(
          fun(Tuple) -> maps:from_list( lists:zip(Vars, Tuple) ) end,
-         (Fun(Env))(Head)
+         (Fun(Env))( head_lits(Head) )
       )
    end.
 
@@ -213,4 +213,15 @@ compile(#recc{horn = [I, #horn{body = Body} = Horn]}, Datalog) ->
    datalog_vm:recursion(
       compile(I, Datalog),
       Horn#horn{body = [compile(Sigma, Datalog) || Sigma <- Body]}
+   ).
+
+head_lits(Head) ->
+   lists:map(
+      fun(X) -> 
+         case is_atom(X) of 
+            true -> '_';
+            false -> X 
+         end
+      end,
+      Head
    ).
