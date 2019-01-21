@@ -194,5 +194,14 @@ Many applications require the computation of various kinds of summary informatio
 p(id, count "links", category 10 "subject").
 ```
 
+## Goal
+
+Goal defines a first rule.
+
+```
+?- h(_, _).
+?- h("example", _).
+?- h/2.
+```
 
 

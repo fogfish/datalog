@@ -17,7 +17,7 @@
 %%   datalog
 
 Nonterminals   CLAUSES GOAL HORN BODY ITEM PREDICATE TERMS TERM PAIRS LIT INFIX.
-Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' '-' ':' '[' ']' '{' '}' symbol iri binary integer decimal.
+Terminals      '?-' ':-' '(' ')' '.' ',' '<' '=' '>' '!' '-' ':' '[' ']' '{' '}' '/' symbol iri binary integer decimal.
 Rootsymbol     CLAUSES.
 
 %%
@@ -33,6 +33,9 @@ CLAUSES -> '$empty' :
 %%
 GOAL -> '?-' PREDICATE '(' TERMS ')' '.' :
    {goal, '$2', '$4'}.
+
+GOAL -> '?-' PREDICATE '/' integer '.' :
+   {goal, '$2', head('$4')}.
 
 %%
 %%
@@ -212,3 +215,6 @@ decimal({_,_,X}) ->
 timestamp({{_, _, _}, {_, _, _}} = T) -> 
    Sec = calendar:datetime_to_gregorian_seconds(T) - 62167219200,
    {Sec div 1000000, Sec rem 1000000, 0}.
+
+head({_,_,X}) ->
+   ['_' || _ <- lists:seq(1, erlang:list_to_integer(X))].
