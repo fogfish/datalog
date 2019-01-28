@@ -204,4 +204,30 @@ Goal defines a first rule.
 ?- h/2.
 ```
 
+## Semantic Web compatibility
+
+Semantic Web uses heavily IRIs as concept identifiers. This library implements datalog syntax enhancement  that support absolute and compact IRIs within the query. An absolute IRI is only used as literals but compact IRIs can be used as variables and literals simultaneously.
+
+The following example shows usage of absolute IRI. You can use them as in-line literals within any predicates.
+
+```
+p(x, <http://example.com/1>).
+
+h(x) :- p(x, <http://example.com/1>).
+```
+
+The following example shows usage of compact IRI, they are only allowed at ground truth or infix predicates.
+
+```
+p(x, foaf:name).
+
+h(x) :- p(x, y), y = foaf:name.
+```
+
+Any compact IRI within predicate is used as variable 
+
+```
+h(rdf:id, foaf:name) :- p(rdf:id, foaf:name).
+```
+
 

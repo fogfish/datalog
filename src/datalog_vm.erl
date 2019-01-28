@@ -144,6 +144,11 @@ term(T, Predicate)
       #{T := Value} -> Value;
       _             -> '_'
    end;
+term({iri, _, _} = T, Predicate) ->
+   case Predicate of
+      #{T := Value} -> Value;
+      _             -> '_'
+   end;
 term(T, _) ->
    T.
 
