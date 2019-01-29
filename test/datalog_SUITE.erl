@@ -206,7 +206,7 @@ recursion_3(_) ->
 %%
 source_semantic_web(_) ->
    datalog(
-      "?- schema:person(_, _). foaf:person(rdf:id, foaf:name). schema:person(rdf:id, foaf:name) :- foaf:person(rdf:id, foaf:name).",
+      "?- schema:person(_, _). foaf:person('rdf:id, 'foaf:name). schema:person('rdf:id, 'foaf:name) :- foaf:person('rdf:id, 'foaf:name).",
       [{1,2}, {2,3}, {3,4}],
       [{1,2}, {2,3}, {3,4}]
    ).

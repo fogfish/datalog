@@ -31,6 +31,9 @@ Rules.
 {CHAR}+  :
    {token, {symbol, TokenLine, TokenChars}}.
 
+'[a-zA-Z_:]* :
+   {token, {symbol, TokenLine, lists:sublist(TokenChars, 2, TokenLen - 1)}}.
+
 %%
 %% xsd:anyURI
 %%   <http://a/b> - absolute IRI
