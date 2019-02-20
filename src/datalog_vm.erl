@@ -132,14 +132,21 @@ eval(Heap, #{'_' := Head, '@' := Fun} = Spec) ->
 
 %%
 %%
-term(T, Spec, Heap) ->
-   case term(T, Spec) of
-      '_' -> term(T, Heap);
-      Val -> Val
-   end.
-
-term(T, Predicate)
+term(T, Spec, Heap)
  when is_atom(T) ->
+   case Spec of
+      #{T := [{Op, Var}]} when is_atom(Var) ->
+         [{Op, maps:get(Var, Heap)}];
+      _ ->
+         case term(T, Spec) of
+            '_' -> term(T, Heap);
+            Val -> Val
+         end
+   end;
+term(T, _, _) ->
+   T.
+
+term(T, Predicate) ->
    case Predicate of
       #{T := Value} -> Value;
       _             -> '_'
