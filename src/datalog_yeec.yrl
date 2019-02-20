@@ -108,6 +108,9 @@ TERM -> symbol LIT :
 TERM -> symbol LIT LIT :
    {atom('$1'), '$2', '$3'}.
 
+TERM -> symbol LIT LIT LIT :
+   {atom('$1'), '$2', '$3', '$4'}.
+
 TERM -> LIT :
    '$1'.
 
