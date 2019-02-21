@@ -1,7 +1,7 @@
 {application, datalog,
    [
       {description, "datalog is a query language based on the logic programming paradigm"},
-      {vsn,         "2.0.2"},
+      {vsn,         "git"},
       {modules,     []},
       {registered,  []},
       {applications,[

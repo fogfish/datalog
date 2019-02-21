@@ -8,7 +8,7 @@
 ## @doc
 ##   This makefile is the wrapper of rebar to build and ship erlang software
 ##
-## @version 1.0.9
+## @version 1.0.12
 .PHONY: all compile test unit clean distclean run console mock-up mock-rm benchmark release dist
 
 APP := $(strip $(APP))
@@ -27,13 +27,13 @@ REL     = ${APP}-${VSN}
 PKG     = ${REL}+${ARCH}.${PLAT}
 TEST   ?= tests
 COOKIE ?= nocookie
-DOCKER ?= fogfish/erlang
+DOCKER ?= fogfish/erlang-alpine
 IID     = ${URI}${ORG}/${APP}
 
 ## required tools
 ##  - rebar version (no spaces at end)
 ##  - path to basho benchmark 
-REBAR  ?= 3.5.0
+REBAR  ?= 3.9.0
 BB      = ../basho_bench
 
 
@@ -89,17 +89,22 @@ compile: rebar3
 
 ##
 ## execute common test and terminate node
-test: _build/test.beam
-	@mkdir -p /tmp/test/${APP}
-	@erl ${EFLAGS} -noshell -pa _build/ -pa test/ -run test run test/${TEST}.config
-	@F=`ls /tmp/test/${APP}/ct_run*/all.coverdata | tail -n 1` ;\
-	cp $$F /tmp/test/${APP}/ct.coverdata
+test:
+	@./rebar3 ct --config=test/${TEST}.config --cover --verbose
+	@./rebar3 cover
 
-_build/test.beam: _build/test.erl
-	@erlc -o _build $<
-
-_build/test.erl:
-	@mkdir -p _build && echo "${BOOT_CT}" > $@
+# test: _build/test.beam
+#	@mkdir -p /tmp/test/${APP}
+#	@erl ${EFLAGS} -noshell -pa _build/ -pa test/ -run test run test/${TEST}.config
+#	@F=`ls /tmp/test/${APP}/ct_run*/all.coverdata | tail -n 1` ;\
+#	cp $$F /tmp/test/${APP}/ct.coverdata
+#
+# _build/test.beam: _build/test.erl
+#	@erlc -o _build $<
+#
+# _build/test.erl:
+#	@mkdir -p _build && echo "${BOOT_CT}" > $@
+#
 
 testclean:
 	@rm -f  _build/test.beam
@@ -148,6 +153,7 @@ mock-rm: test/mock/docker-compose.yml
 	-@docker-compose -f $< down --rmi all -v --remove-orphans
 
 dist-up: docker-compose.yml _build/spawner
+	@docker-compose build
 	@docker-compose -f $< up
 
 dist-rm: docker-compose.yml
@@ -191,6 +197,8 @@ endif
 
 ## build docker image
 docker: Dockerfile
+	git status --porcelain
+	test -z "`git status --porcelain`" || exit -1
 	docker build \
 		--build-arg APP=${APP} \
 		--build-arg VSN=${VSN} \
